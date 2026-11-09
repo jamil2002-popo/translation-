@@ -164,7 +164,7 @@
         <path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>
       </svg>
       <strong id="drop-title">Dépose ton MP3 ici</strong>
-      <span id="drop-sub" class="hint">ou clique pour choisir un fichier (MP3, M4A, WAV — 95 Mo max)</span>
+      <span id="drop-sub" class="hint">ou clique pour choisir un fichier (MP3, M4A, WAV — 500 Mo max)</span>
       <input id="file" type="file" accept="audio/*,.mp3,.m4a,.wav,.ogg" hidden>
     </div>
 
@@ -216,7 +216,8 @@ const PAR_DEFAUT = ['zh', 'es', 'ru', 'hi'];
 const BRANCH = 'preches';
 const WORKFLOW = 'traduire.yml';
 const API = 'https://api.github.com';
-const MAX_MO = 95;
+const MAX_MO = 500;
+const MORCEAU = 5 * 1024 * 1024; // taille de chaque morceau envoyé
 
 const $ = (s) => document.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -376,10 +377,20 @@ async function lancer() {
 
   const carte = ajouterJob(id, 'Envoi du fichier…');
   try {
-    const b64 = await lireBase64(fichier);
-    const blob = await envoyerBlob(b64, (p) => carte.progression(p * 0.9, `Envoi du fichier… ${Math.round(p * 100)} %`));
+    // GitHub refuse les gros envois d'un coup : on découpe en morceaux,
+    // que le workflow recolle avant la traduction.
+    const n = Math.ceil(fichier.size / MORCEAU) || 1;
+    const parties = [];
+    for (let i = 0; i < n; i++) {
+      const b64 = await lireBase64(fichier.slice(i * MORCEAU, (i + 1) * MORCEAU));
+      const blob = await envoyerBlob(b64, (p) => {
+        const total = (i + p) / n;
+        carte.progression(total * 0.9, `Envoi du fichier… ${Math.round(total * 100)} %`);
+      });
+      parties.push({ path: `${chemin}.part${String(i).padStart(3, '0')}`, sha: blob.sha });
+    }
     carte.progression(0.95, 'Enregistrement…');
-    await commit([{ path: chemin, sha: blob.sha }], `Nouvelle prêche : ${fichier.name}`);
+    await commit(parties, `Nouvelle prêche : ${fichier.name}`);
     carte.progression(1, 'Démarrage de la traduction…');
     await post(`/actions/workflows/${WORKFLOW}/dispatches`, {
       ref: 'main',
@@ -390,7 +401,7 @@ async function lancer() {
     fichier = null; $('#file').value = '';
     $('#drop').classList.remove('has-file');
     $('#drop-title').textContent = 'Dépose ton MP3 ici';
-    $('#drop-sub').textContent = 'ou clique pour choisir un fichier (MP3, M4A, WAV — 95 Mo max)';
+    $('#drop-sub').textContent = 'ou clique pour choisir un fichier (MP3, M4A, WAV — 500 Mo max)';
     setTimeout(suivreTravaux, 4000);
   } catch (e) {
     carte.erreur(erreurLisible(e));

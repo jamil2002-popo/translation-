@@ -69,6 +69,12 @@ jobs:
         run: |
           set -euo pipefail
           case "$FICHIER" in entrees/*) ;; *) echo "Chemin invalide : $FICHIER"; exit 1;; esac
+          # La page envoie le fichier en morceaux (.part000, .part001…) : on les recolle.
+          if [ ! -f "preches/$FICHIER" ]; then
+            ls "preches/$FICHIER".part* >/dev/null
+            cat "preches/$FICHIER".part* > "preches/$FICHIER"
+            ls -lh "preches/$FICHIER"
+          fi
           NOM="$(basename "$FICHIER")"; NOM="${NOM%.*}"
           MOTEUR=google
           if [ -n "$GEMINI_API_KEY" ]; then MOTEUR=gemini; fi
