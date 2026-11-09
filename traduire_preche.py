@@ -121,7 +121,7 @@ def traduire_gtx(texte: str, source: str, cible: str) -> str:
     url = "https://translate.googleapis.com/translate_a/single"
     resultat = []
     for morceau in decouper(texte):
-        for essai in range(7):
+        for essai in range(4):
             try:
                 r = requests.post(
                     url,
@@ -133,9 +133,9 @@ def traduire_gtx(texte: str, source: str, cible: str) -> str:
                 resultat.append("".join(s[0] for s in r.json()[0] if s[0]))
                 break
             except Exception as e:
-                if essai == 6:
+                if essai == 3:
                     raise
-                attente = 15 * 2 ** essai  # 15 s, 30 s, 1 min… jusqu'à 8 min
+                attente = 15 * 2 ** essai  # 15 s, 30 s, 1 min
                 print(f"      Erreur ({e}), nouvel essai dans {attente} s…")
                 time.sleep(attente)
         time.sleep(2)
@@ -188,6 +188,35 @@ def traduire_gemini(texte: str, source: str, cible_nom: str) -> str:
     return "\n".join(resultat)
 
 
+# Codes de langue du modèle NLLB (traduction locale de secours)
+NLLB_CODES = {"zh": "zho_Hans", "es": "spa_Latn", "ru": "rus_Cyrl", "hi": "hin_Deva",
+              "en": "eng_Latn", "fr": "fra_Latn", "pt": "por_Latn", "ar": "arb_Arab"}
+NLLB_MODELE = "facebook/nllb-200-distilled-600M"
+
+
+def traduire_nllb(texte: str, source: str, cible: str) -> str:
+    """Traduction locale avec NLLB (Meta) : gratuite, sans limite, un peu moins bonne."""
+    import torch
+    from transformers import AutoModelForSeq2SeqLM, AutoTokenizer
+
+    print(f"      Traduction locale avec {NLLB_MODELE} (téléchargé la première fois)…")
+    tok = AutoTokenizer.from_pretrained(NLLB_MODELE, src_lang=NLLB_CODES[source])
+    model = AutoModelForSeq2SeqLM.from_pretrained(NLLB_MODELE).eval()
+    cible_id = tok.convert_tokens_to_ids(NLLB_CODES[cible])
+    segments = decouper(texte, 400)
+    resultat = []
+    for i in range(0, len(segments), 8):
+        lot = segments[i:i + 8]
+        print(f"\r      … {min(i + 8, len(segments))}/{len(segments)}", end="", flush=True)
+        entree = tok(lot, return_tensors="pt", padding=True, truncation=True, max_length=256)
+        with torch.no_grad():
+            sortie = model.generate(**entree, forced_bos_token_id=cible_id,
+                                    max_new_tokens=360, num_beams=2)
+        resultat += tok.batch_decode(sortie, skip_special_tokens=True)
+    print()
+    return " ".join(resultat)
+
+
 NOMS_ANGLAIS = {"zh": "Simplified Chinese", "es": "Spanish", "ru": "Russian",
                 "hi": "Hindi", "en": "English", "fr": "French",
                 "pt": "Portuguese", "ar": "Arabic"}
@@ -200,8 +229,8 @@ def traduire(texte: str, source: str, langue: str, moteur: str) -> str:
     try:
         return traduire_gtx(texte, source, code_google)
     except Exception as e:
-        print(f"      Première méthode impossible ({e}), essai d'une autre…")
-        return traduire_google(texte, source, code_google)
+        print(f"      Google refuse ({e}). Traduction locale de secours…")
+    return traduire_nllb(texte, source, langue)
 
 
 # --------------------------------------------------------------------------

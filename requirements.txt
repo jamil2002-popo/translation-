@@ -4,5 +4,7 @@ requests
 edge-tts>=7.0
 imageio-ffmpeg>=0.5
 numpy
+# Optionnel, traduction locale de secours (NLLB) quand Google refuse :
+# torch transformers sentencepiece
 # Optionnel, seulement pour --moteur gemini :
 # google-genai>=1.0
