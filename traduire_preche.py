@@ -121,7 +121,7 @@ def traduire_gtx(texte: str, source: str, cible: str) -> str:
     url = "https://translate.googleapis.com/translate_a/single"
     resultat = []
     for morceau in decouper(texte):
-        for essai in range(5):
+        for essai in range(7):
             try:
                 r = requests.post(
                     url,
@@ -133,11 +133,12 @@ def traduire_gtx(texte: str, source: str, cible: str) -> str:
                 resultat.append("".join(s[0] for s in r.json()[0] if s[0]))
                 break
             except Exception as e:
-                if essai == 4:
+                if essai == 6:
                     raise
-                print(f"      Erreur ({e}), nouvel essai…")
-                time.sleep(5 * 2 ** essai)
-        time.sleep(1)
+                attente = 15 * 2 ** essai  # 15 s, 30 s, 1 min… jusqu'à 8 min
+                print(f"      Erreur ({e}), nouvel essai dans {attente} s…")
+                time.sleep(attente)
+        time.sleep(2)
     return " ".join(resultat)
 
 
