@@ -206,16 +206,42 @@ def traduire(texte: str, source: str, langue: str, moteur: str) -> str:
 # --------------------------------------------------------------------------
 # 3. Synthèse vocale
 # --------------------------------------------------------------------------
-async def lire_a_voix_haute(texte: str, voix: str, sortie: Path, vitesse: str):
+# Voix de secours si la voix choisie ne répond pas (Microsoft en retire parfois).
+VOIX_SECOURS = {
+    "zh": ["zh-CN-YunxiNeural", "zh-CN-YunjianNeural", "zh-CN-YunyangNeural", "zh-CN-XiaoxiaoNeural"],
+    "es": ["es-MX-JorgeNeural", "es-ES-AlvaroNeural", "es-US-AlonsoNeural", "es-MX-DaliaNeural"],
+    "ru": ["ru-RU-DmitryNeural", "ru-RU-SvetlanaNeural", "ru-RU-DariyaNeural"],
+    "hi": ["hi-IN-MadhurNeural", "hi-IN-SwaraNeural"],
+}
+
+
+async def voix_candidates(langue: str, preferee: str) -> list[str]:
+    """La voix choisie, puis les voix de secours, puis toutes celles de la langue."""
     import edge_tts
 
-    # On génère morceau par morceau et on concatène les MP3 (même format),
-    # ce qui évite les coupures sur les très longs textes.
-    morceaux = decouper(texte, 2500)
+    liste = [preferee] + VOIX_SECOURS.get(langue, [])
+    try:
+        code = LANGUES[langue][0].split("-")[0]
+        toutes = await edge_tts.list_voices()
+        hommes = [v["ShortName"] for v in toutes
+                  if v["Locale"].startswith(code + "-") and v.get("Gender") == "Male"]
+        autres = [v["ShortName"] for v in toutes if v["Locale"].startswith(code + "-")]
+        liste += hommes + autres
+    except Exception as e:
+        print(f"      (liste des voix indisponible : {e})")
+    return list(dict.fromkeys(liste))  # sans doublons, dans l'ordre
+
+
+async def synthese(texte: str, voix: str, sortie: Path, vitesse: str):
+    import edge_tts
+
+    # Morceau par morceau, puis concaténation des MP3 (même format) :
+    # évite les coupures sur les très longs textes.
+    morceaux = decouper(texte, 1500)
     with open(sortie, "wb") as f:
         for i, morceau in enumerate(morceaux, 1):
             print(f"\r      … morceau {i}/{len(morceaux)}", end="", flush=True)
-            for essai in range(4):
+            for essai in range(3):
                 try:
                     tampon = bytearray()
                     comm = edge_tts.Communicate(morceau, voix, rate=vitesse)
@@ -225,11 +251,26 @@ async def lire_a_voix_haute(texte: str, voix: str, sortie: Path, vitesse: str):
                     f.write(tampon)
                     break
                 except Exception as e:
-                    if essai == 3:
+                    if essai == 2:
                         raise
                     print(f"\n      Erreur voix ({e}), nouvel essai…")
-                    await asyncio.sleep(2 ** (essai + 1))
+                    await asyncio.sleep(3 * (essai + 1))
     print()
+
+
+async def lire_a_voix_haute(texte: str, langue: str, preferee: str, sortie: Path, vitesse: str) -> str:
+    """Essaie les voix une par une ; renvoie celle qui a fonctionné."""
+    derniere = None
+    for voix in await voix_candidates(langue, preferee):
+        print(f"[3/3] Voix {voix}…")
+        try:
+            await synthese(texte, voix, sortie, vitesse)
+            return voix
+        except Exception as e:
+            derniere = e
+            sortie.unlink(missing_ok=True)
+            print(f"      La voix {voix} ne fonctionne pas ({e}). Essai d'une autre voix…")
+    raise RuntimeError(f"Aucune voix n'a fonctionné : {derniere}")
 
 
 # --------------------------------------------------------------------------
@@ -273,30 +314,41 @@ def main() -> int:
         fichier_transcription.write_text(texte, encoding="utf-8")
         print(f"      → {fichier_transcription}")
 
+    echecs = []
     for langue in args.langues:
         nom = LANGUES[langue][1]
         print(f"\n=== {nom.upper()} ===")
+        try:
+            # 2. Traduction (réutilisée si déjà faite : on peut corriger le .txt
+            #    à la main puis relancer pour régénérer seulement l'audio)
+            fichier_trad = dossier / f"{args.audio.stem}.{langue}.txt"
+            if fichier_trad.exists():
+                print(f"[2/3] Traduction déjà faite : {fichier_trad}")
+                traduction = fichier_trad.read_text(encoding="utf-8")
+            else:
+                print(f"[2/3] Traduction en {nom} ({args.moteur})…")
+                traduction = traduire(texte, args.source, langue, args.moteur)
+                fichier_trad.write_text(traduction, encoding="utf-8")
+                print(f"      → {fichier_trad}")
 
-        # 2. Traduction (réutilisée si déjà faite : on peut corriger le .txt
-        #    à la main puis relancer pour régénérer seulement l'audio)
-        fichier_trad = dossier / f"{args.audio.stem}.{langue}.txt"
-        if fichier_trad.exists():
-            print(f"[2/3] Traduction déjà faite : {fichier_trad}")
-            traduction = fichier_trad.read_text(encoding="utf-8")
-        else:
-            print(f"[2/3] Traduction en {nom} ({args.moteur})…")
-            traduction = traduire(texte, args.source, langue, args.moteur)
-            fichier_trad.write_text(traduction, encoding="utf-8")
-            print(f"      → {fichier_trad}")
+            # 3. Voix (sautée si le MP3 existe déjà : supprime-le pour le refaire)
+            fichier_mp3 = dossier / f"{args.audio.stem}.{langue}.mp3"
+            if fichier_mp3.exists() and fichier_mp3.stat().st_size > 0:
+                print(f"[3/3] Audio déjà fait : {fichier_mp3}")
+                continue
+            asyncio.run(lire_a_voix_haute(
+                traduction, langue, voix.get(langue, LANGUES[langue][2]),
+                fichier_mp3, args.vitesse))
+            print(f"      → {fichier_mp3}")
+        except Exception as e:
+            print(f"\n!!! Échec pour le {nom} : {e}")
+            echecs.append(nom)
 
-        # 3. Voix
-        fichier_mp3 = dossier / f"{args.audio.stem}.{langue}.mp3"
-        v = voix.get(langue, LANGUES[langue][2])
-        print(f"[3/3] Voix {v}…")
-        asyncio.run(lire_a_voix_haute(traduction, v, fichier_mp3, args.vitesse))
-        print(f"      → {fichier_mp3}")
-
-    print(f"\nTerminé ! Fichiers dans : {dossier.resolve()}")
+    print(f"\nFichiers dans : {dossier.resolve()}")
+    if echecs:
+        print(f"Échec pour : {', '.join(echecs)}. Relance pour réessayer ces langues.")
+        return 1
+    print("Terminé !")
     return 0
 
 
