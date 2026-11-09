@@ -176,7 +176,7 @@ def traduire_gemini(texte: str, source: str, cible_nom: str) -> str:
         for essai in range(4):
             try:
                 rep = client.models.generate_content(
-                    model="gemini-2.5-flash", contents=prompt
+                    model=os.environ.get("GEMINI_MODELE", "gemini-flash-latest"), contents=prompt
                 )
                 resultat.append(rep.text.strip())
                 break
@@ -225,7 +225,10 @@ NOMS_ANGLAIS = {"zh": "Simplified Chinese", "es": "Spanish", "ru": "Russian",
 def traduire(texte: str, source: str, langue: str, moteur: str) -> str:
     code_google = LANGUES[langue][0]
     if moteur == "gemini":
-        return traduire_gemini(texte, source, NOMS_ANGLAIS[langue])
+        try:
+            return traduire_gemini(texte, source, NOMS_ANGLAIS[langue])
+        except Exception as e:
+            print(f"      Gemini a échoué ({e}). Passage à Google…")
     try:
         return traduire_gtx(texte, source, code_google)
     except Exception as e:
