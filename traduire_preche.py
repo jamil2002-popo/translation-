@@ -1,0 +1,253 @@
+#!/usr/bin/env python3
+"""
+Traduit une prêche audio (MP3) dans plusieurs langues, avec une voix.
+
+Pipeline 100 % gratuit :
+  1. Transcription  : faster-whisper (local, pas de clé)
+  2. Traduction     : Google Traduction via deep-translator (pas de clé)
+                      ou Gemini (clé gratuite, meilleure qualité)
+  3. Voix           : edge-tts (voix neuronales Microsoft, pas de clé)
+
+Exemple :
+  python traduire_preche.py preche.mp3
+  python traduire_preche.py preche.mp3 --langues es zh ru hi --modele medium
+"""
+
+from __future__ import annotations
+
+import argparse
+import asyncio
+import os
+import re
+import sys
+import time
+from pathlib import Path
+
+# --------------------------------------------------------------------------
+# Configuration des langues
+# --------------------------------------------------------------------------
+# code court -> (code Google Traduction, nom, voix edge-tts par défaut)
+LANGUES = {
+    "zh": ("zh-CN", "chinois", "zh-CN-YunxiNeural"),
+    "es": ("es", "espagnol", "es-MX-JorgeNeural"),
+    "ru": ("ru", "russe", "ru-RU-DmitryNeural"),
+    "hi": ("hi", "hindi", "hi-IN-MadhurNeural"),
+    # Langues supplémentaires possibles :
+    "en": ("en", "anglais", "en-US-GuyNeural"),
+    "fr": ("fr", "français", "fr-FR-HenriNeural"),
+    "pt": ("pt", "portugais", "pt-BR-AntonioNeural"),
+    "ar": ("ar", "arabe", "ar-SA-HamedNeural"),
+}
+LANGUES_PAR_DEFAUT = ["zh", "es", "ru", "hi"]
+
+# Google Traduction gratuit refuse les textes de plus de ~5000 caractères.
+TAILLE_MORCEAU = 4000
+
+
+# --------------------------------------------------------------------------
+# 1. Transcription
+# --------------------------------------------------------------------------
+def transcrire(audio: Path, modele: str, langue_source: str) -> str:
+    from faster_whisper import WhisperModel
+
+    print(f"[1/3] Transcription de {audio.name} (modèle Whisper « {modele} »)…")
+    print("      La première fois, le modèle est téléchargé (quelques centaines de Mo).")
+    model = WhisperModel(modele, device="auto", compute_type="int8")
+    segments, info = model.transcribe(
+        str(audio), language=langue_source, vad_filter=True, beam_size=5
+    )
+    morceaux = []
+    for seg in segments:
+        morceaux.append(seg.text.strip())
+        minutes, secondes = divmod(int(seg.end), 60)
+        print(f"\r      … {minutes:02d}:{secondes:02d} / "
+              f"{int(info.duration) // 60:02d}:{int(info.duration) % 60:02d}",
+              end="", flush=True)
+    print()
+    return " ".join(morceaux)
+
+
+# --------------------------------------------------------------------------
+# 2. Traduction
+# --------------------------------------------------------------------------
+def decouper(texte: str, taille: int = TAILLE_MORCEAU) -> list[str]:
+    """Découpe le texte en morceaux sans couper au milieu d'une phrase."""
+    phrases = re.split(r"(?<=[.!?。！？])\s+", texte.strip())
+    morceaux, courant = [], ""
+    for phrase in phrases:
+        # Une phrase plus longue que la limite : on la coupe sur les espaces.
+        while len(phrase) > taille:
+            coupe = phrase.rfind(" ", 0, taille)
+            coupe = coupe if coupe > 0 else taille
+            if courant:
+                morceaux.append(courant)
+                courant = ""
+            morceaux.append(phrase[:coupe])
+            phrase = phrase[coupe:].strip()
+        if len(courant) + len(phrase) + 1 > taille and courant:
+            morceaux.append(courant)
+            courant = phrase
+        else:
+            courant = f"{courant} {phrase}".strip()
+    if courant:
+        morceaux.append(courant)
+    return morceaux
+
+
+def traduire_google(texte: str, source: str, cible: str) -> str:
+    from deep_translator import GoogleTranslator
+
+    traducteur = GoogleTranslator(source=source, target=cible)
+    resultat = []
+    for i, morceau in enumerate(decouper(texte), 1):
+        for essai in range(4):
+            try:
+                resultat.append(traducteur.translate(morceau))
+                break
+            except Exception as e:  # réseau / limite temporaire
+                if essai == 3:
+                    raise
+                print(f"      Erreur ({e}), nouvel essai…")
+                time.sleep(2 ** (essai + 1))
+        time.sleep(0.5)  # rester poli avec le service gratuit
+    return " ".join(resultat)
+
+
+def traduire_gemini(texte: str, source: str, cible_nom: str) -> str:
+    from google import genai
+
+    client = genai.Client(api_key=os.environ["GEMINI_API_KEY"])
+    resultat = []
+    for morceau in decouper(texte, 8000):
+        prompt = (
+            f"Translate this Christian sermon excerpt from '{source}' into "
+            f"{cible_nom}. Keep the tone of a preacher, translate Bible "
+            f"references using the standard Bible names of that language. "
+            f"Output only the translation, nothing else.\n\n{morceau}"
+        )
+        for essai in range(4):
+            try:
+                rep = client.models.generate_content(
+                    model="gemini-2.5-flash", contents=prompt
+                )
+                resultat.append(rep.text.strip())
+                break
+            except Exception as e:
+                if essai == 3:
+                    raise
+                print(f"      Erreur Gemini ({e}), nouvel essai…")
+                time.sleep(10 * (essai + 1))
+    return "\n".join(resultat)
+
+
+NOMS_ANGLAIS = {"zh": "Simplified Chinese", "es": "Spanish", "ru": "Russian",
+                "hi": "Hindi", "en": "English", "fr": "French",
+                "pt": "Portuguese", "ar": "Arabic"}
+
+
+def traduire(texte: str, source: str, langue: str, moteur: str) -> str:
+    code_google = LANGUES[langue][0]
+    if moteur == "gemini":
+        return traduire_gemini(texte, source, NOMS_ANGLAIS[langue])
+    return traduire_google(texte, source, code_google)
+
+
+# --------------------------------------------------------------------------
+# 3. Synthèse vocale
+# --------------------------------------------------------------------------
+async def lire_a_voix_haute(texte: str, voix: str, sortie: Path, vitesse: str):
+    import edge_tts
+
+    # On génère morceau par morceau et on concatène les MP3 (même format),
+    # ce qui évite les coupures sur les très longs textes.
+    morceaux = decouper(texte, 2500)
+    with open(sortie, "wb") as f:
+        for i, morceau in enumerate(morceaux, 1):
+            print(f"\r      … morceau {i}/{len(morceaux)}", end="", flush=True)
+            for essai in range(4):
+                try:
+                    tampon = bytearray()
+                    comm = edge_tts.Communicate(morceau, voix, rate=vitesse)
+                    async for bloc in comm.stream():
+                        if bloc["type"] == "audio":
+                            tampon.extend(bloc["data"])
+                    f.write(tampon)
+                    break
+                except Exception as e:
+                    if essai == 3:
+                        raise
+                    print(f"\n      Erreur voix ({e}), nouvel essai…")
+                    await asyncio.sleep(2 ** (essai + 1))
+    print()
+
+
+# --------------------------------------------------------------------------
+# Programme principal
+# --------------------------------------------------------------------------
+def main() -> int:
+    p = argparse.ArgumentParser(description="Traduit une prêche MP3 en plusieurs langues.")
+    p.add_argument("audio", type=Path, help="Fichier audio de la prêche (MP3, WAV, M4A…)")
+    p.add_argument("--langues", nargs="+", default=LANGUES_PAR_DEFAUT,
+                   choices=sorted(LANGUES), help="Langues cibles (défaut : zh es ru hi)")
+    p.add_argument("--source", default="en", help="Langue parlée dans la prêche (défaut : en)")
+    p.add_argument("--modele", default="small",
+                   help="Modèle Whisper : tiny, base, small, medium, large-v3 (défaut : small)")
+    p.add_argument("--moteur", choices=["google", "gemini"], default="google",
+                   help="Moteur de traduction (gemini demande GEMINI_API_KEY, gratuit)")
+    p.add_argument("--vitesse", default="+0%", help="Vitesse de la voix, ex. -10%% ou +5%%")
+    p.add_argument("--voix", nargs="*", default=[], metavar="LANGUE=VOIX",
+                   help="Changer une voix, ex. es=es-ES-AlvaroNeural")
+    p.add_argument("--sortie", type=Path, default=None, help="Dossier de sortie")
+    args = p.parse_args()
+
+    if not args.audio.exists():
+        print(f"Fichier introuvable : {args.audio}")
+        return 1
+    if args.moteur == "gemini" and not os.environ.get("GEMINI_API_KEY"):
+        print("Le moteur gemini demande la variable GEMINI_API_KEY "
+              "(clé gratuite sur https://aistudio.google.com/apikey).")
+        return 1
+
+    voix = {k: v for k, v in (x.split("=", 1) for x in args.voix)}
+    dossier = args.sortie or Path("sortie") / args.audio.stem
+    dossier.mkdir(parents=True, exist_ok=True)
+
+    # 1. Transcription (réutilisée si déjà faite)
+    fichier_transcription = dossier / f"{args.audio.stem}.{args.source}.txt"
+    if fichier_transcription.exists():
+        print(f"[1/3] Transcription déjà faite : {fichier_transcription}")
+        texte = fichier_transcription.read_text(encoding="utf-8")
+    else:
+        texte = transcrire(args.audio, args.modele, args.source)
+        fichier_transcription.write_text(texte, encoding="utf-8")
+        print(f"      → {fichier_transcription}")
+
+    for langue in args.langues:
+        nom = LANGUES[langue][1]
+        print(f"\n=== {nom.upper()} ===")
+
+        # 2. Traduction (réutilisée si déjà faite : on peut corriger le .txt
+        #    à la main puis relancer pour régénérer seulement l'audio)
+        fichier_trad = dossier / f"{args.audio.stem}.{langue}.txt"
+        if fichier_trad.exists():
+            print(f"[2/3] Traduction déjà faite : {fichier_trad}")
+            traduction = fichier_trad.read_text(encoding="utf-8")
+        else:
+            print(f"[2/3] Traduction en {nom} ({args.moteur})…")
+            traduction = traduire(texte, args.source, langue, args.moteur)
+            fichier_trad.write_text(traduction, encoding="utf-8")
+            print(f"      → {fichier_trad}")
+
+        # 3. Voix
+        fichier_mp3 = dossier / f"{args.audio.stem}.{langue}.mp3"
+        v = voix.get(langue, LANGUES[langue][2])
+        print(f"[3/3] Voix {v}…")
+        asyncio.run(lire_a_voix_haute(traduction, v, fichier_mp3, args.vitesse))
+        print(f"      → {fichier_mp3}")
+
+    print(f"\nTerminé ! Fichiers dans : {dossier.resolve()}")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
