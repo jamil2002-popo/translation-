@@ -47,6 +47,23 @@ TAILLE_MORCEAU = 4000
 # --------------------------------------------------------------------------
 # 1. Transcription
 # --------------------------------------------------------------------------
+def lire_audio(audio: Path):
+    """Décode l'audio en 16 kHz mono avec ffmpeg (plus fiable que PyAV)."""
+    import shutil
+    import subprocess
+
+    import numpy as np
+
+    if not shutil.which("ffmpeg"):
+        return str(audio)  # pas de ffmpeg : on laisse faster-whisper décoder
+    brut = subprocess.run(
+        ["ffmpeg", "-nostdin", "-loglevel", "error", "-i", str(audio),
+         "-f", "s16le", "-ac", "1", "-ar", "16000", "-"],
+        check=True, capture_output=True,
+    ).stdout
+    return np.frombuffer(brut, np.int16).astype(np.float32) / 32768.0
+
+
 def transcrire(audio: Path, modele: str, langue_source: str) -> str:
     from faster_whisper import WhisperModel
 
@@ -54,7 +71,7 @@ def transcrire(audio: Path, modele: str, langue_source: str) -> str:
     print("      La première fois, le modèle est téléchargé (quelques centaines de Mo).")
     model = WhisperModel(modele, device="auto", compute_type="int8")
     segments, info = model.transcribe(
-        str(audio), language=langue_source, vad_filter=True, beam_size=5
+        lire_audio(audio), language=langue_source, vad_filter=True, beam_size=5
     )
     morceaux = []
     for seg in segments:
