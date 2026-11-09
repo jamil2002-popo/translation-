@@ -1,0 +1,653 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Traduction de prêches</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f6f3ee;
+    --card: #ffffff;
+    --ink: #1f1d1a;
+    --muted: #6d6860;
+    --line: #e6e0d6;
+    --accent: #8a5a2b;
+    --accent-ink: #ffffff;
+    --accent-soft: #f3e9dd;
+    --ok: #2f7a4f;
+    --ok-soft: #e4f2e9;
+    --err: #b3261e;
+    --err-soft: #fbe7e5;
+    --shadow: 0 1px 2px rgba(40,30,20,.05), 0 8px 24px rgba(40,30,20,.06);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #171512;
+      --card: #211e1a;
+      --ink: #f1ece4;
+      --muted: #a39b8f;
+      --line: #36312a;
+      --accent: #d9a36a;
+      --accent-ink: #1b1510;
+      --accent-soft: #33281d;
+      --ok: #7cc79a;
+      --ok-soft: #1f3327;
+      --err: #f08b82;
+      --err-soft: #3a2220;
+      --shadow: none;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font: 16px/1.5 Inter, system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+  main { max-width: 760px; margin: 0 auto; padding: 48px 16px 80px; }
+  header { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 32px; }
+  h1 { font-family: Fraunces, Georgia, serif; font-weight: 600; font-size: clamp(28px, 6vw, 40px); line-height: 1.1; margin: 0 0 8px; letter-spacing: -.01em; }
+  .sub { color: var(--muted); margin: 0; }
+  h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); font-weight: 600; margin: 40px 0 12px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 24px; box-shadow: var(--shadow); }
+  button, .btn {
+    font: inherit; font-weight: 500; font-size: 15px;
+    border: 1px solid var(--line); background: var(--card); color: var(--ink);
+    border-radius: 10px; padding: 9px 16px; cursor: pointer; text-decoration: none;
+    display: inline-flex; align-items: center; gap: 6px;
+  }
+  button:hover, .btn:hover { border-color: var(--accent); }
+  button.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+  button.primary:disabled { opacity: .45; cursor: not-allowed; }
+  button.small, .btn.small { padding: 5px 11px; font-size: 14px; }
+  button.link { border: none; background: none; padding: 0; color: var(--muted); text-decoration: underline; font-weight: 400; }
+  input[type=password], input[type=text], select {
+    font: inherit; width: 100%; padding: 10px 12px; border-radius: 10px;
+    border: 1px solid var(--line); background: var(--bg); color: var(--ink);
+  }
+  label.field { display: block; font-weight: 500; margin: 16px 0 6px; }
+  .hint { color: var(--muted); font-size: 14px; }
+  .hint a { color: var(--accent); }
+  ol.hint { padding-left: 20px; margin: 8px 0 0; }
+  ol.hint li { margin: 4px 0; }
+
+  /* Zone de dépôt */
+  .drop {
+    border: 2px dashed var(--line); border-radius: 14px; padding: 40px 16px;
+    text-align: center; cursor: pointer; transition: border-color .15s, background .15s;
+  }
+  .drop:hover, .drop.over { border-color: var(--accent); background: var(--accent-soft); }
+  .drop .icon { width: 48px; height: 48px; margin: 0 auto 12px; color: var(--accent); }
+  .drop strong { display: block; font-size: 18px; margin-bottom: 4px; }
+  .drop.has-file { border-style: solid; border-color: var(--accent); background: var(--accent-soft); }
+
+  .options { display: grid; grid-template-columns: 1fr 1fr; gap: 0 16px; }
+  @media (max-width: 560px) { .options { grid-template-columns: 1fr; } }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip { position: relative; }
+  .chip input { position: absolute; opacity: 0; pointer-events: none; }
+  .chip span {
+    display: inline-block; padding: 7px 14px; border-radius: 999px;
+    border: 1px solid var(--line); cursor: pointer; user-select: none; font-size: 15px;
+  }
+  .chip input:checked + span { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+  .chip input:focus-visible + span { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .actions { margin-top: 24px; display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+
+  /* Suivi */
+  .job { margin-top: 12px; }
+  .job-head { display: flex; justify-content: space-between; gap: 12px; align-items: baseline; flex-wrap: wrap; }
+  .job-title { font-weight: 600; word-break: break-word; }
+  .bar { height: 6px; background: var(--line); border-radius: 99px; overflow: hidden; margin: 12px 0 8px; }
+  .bar > div { height: 100%; background: var(--accent); width: 0; transition: width .4s; }
+  .bar.indeterminate > div { width: 30%; animation: slide 1.4s ease-in-out infinite; }
+  @keyframes slide { from { transform: translateX(-100%); } to { transform: translateX(340%); } }
+  .status { font-size: 14px; color: var(--muted); }
+  .status.ok { color: var(--ok); }
+  .status.err { color: var(--err); }
+
+  /* Bibliothèque */
+  .sermon + .sermon { margin-top: 12px; }
+  .sermon-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
+  .sermon-title { font-family: Fraunces, Georgia, serif; font-size: 20px; font-weight: 600; word-break: break-word; }
+  .lang { display: grid; grid-template-columns: 44px 1fr auto; align-items: center; gap: 12px; padding: 10px 0; border-top: 1px solid var(--line); }
+  .badge { font-size: 12px; font-weight: 600; letter-spacing: .04em; text-align: center; padding: 4px 0; border-radius: 6px; background: var(--accent-soft); color: var(--accent); }
+  .lang-btns { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+  .lang audio { grid-column: 1 / -1; width: 100%; height: 40px; }
+  .lang pre { grid-column: 1 / -1; white-space: pre-wrap; font: 14px/1.6 Inter, system-ui, sans-serif; background: var(--bg); border-radius: 10px; padding: 12px; margin: 0; max-height: 260px; overflow: auto; }
+  .empty { color: var(--muted); text-align: center; padding: 24px; }
+  .notice { border-radius: 12px; padding: 12px 16px; font-size: 15px; margin-top: 16px; }
+  .notice.err { background: var(--err-soft); color: var(--err); }
+  .notice.ok { background: var(--ok-soft); color: var(--ok); }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <div>
+      <h1>Traduction de prêches</h1>
+      <p class="sub">Dépose une prêche en MP3 et récupère-la lue en chinois, espagnol, russe et hindi.</p>
+    </div>
+    <button id="btn-settings" class="small" title="Réglages">Réglages</button>
+  </header>
+
+  <!-- Réglages : clé GitHub -->
+  <section id="settings" class="card" hidden>
+    <strong>Connexion à GitHub</strong>
+    <p class="hint">La traduction tourne gratuitement sur les serveurs de GitHub. Cette page a besoin d'une clé d'accès, à créer une seule fois :</p>
+    <ol class="hint">
+      <li>Ouvre <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">github.com/settings/personal-access-tokens/new</a>.</li>
+      <li>Donne-lui un nom (ex. « Traduction ») et choisis une expiration (ex. 1 an).</li>
+      <li><em>Repository access</em> → <em>Only select repositories</em> → choisis <code>translation-</code>.</li>
+      <li><em>Permissions</em> → <em>Repository permissions</em> : <strong>Actions</strong> = Read and write, <strong>Contents</strong> = Read and write.</li>
+      <li>Clique sur <em>Generate token</em>, copie la clé et colle-la ci-dessous.</li>
+    </ol>
+    <label class="field" for="token">Clé d'accès GitHub</label>
+    <input id="token" type="password" placeholder="github_pat_…" autocomplete="off">
+    <label class="field" for="repo">Repo</label>
+    <input id="repo" type="text" value="jamil2002-popo/translation-">
+    <p class="hint">La clé reste uniquement dans ce navigateur, sur cet ordinateur.</p>
+    <div class="actions">
+      <button id="btn-save" class="primary">Enregistrer</button>
+      <span id="settings-msg" class="status"></span>
+    </div>
+  </section>
+
+  <!-- Envoi -->
+  <section id="upload" class="card" style="margin-top:16px">
+    <div id="drop" class="drop" tabindex="0" role="button" aria-label="Choisir un fichier audio">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>
+      </svg>
+      <strong id="drop-title">Dépose ton MP3 ici</strong>
+      <span id="drop-sub" class="hint">ou clique pour choisir un fichier (MP3, M4A, WAV — 95 Mo max)</span>
+      <input id="file" type="file" accept="audio/*,.mp3,.m4a,.wav,.ogg" hidden>
+    </div>
+
+    <div class="options">
+      <div>
+        <label class="field">Langue de la prêche</label>
+        <div class="chips" id="source">
+          <label class="chip"><input type="radio" name="source" value="en" checked><span>Anglais</span></label>
+          <label class="chip"><input type="radio" name="source" value="fr"><span>Français</span></label>
+        </div>
+      </div>
+      <div>
+        <label class="field" for="modele">Qualité de l'écoute</label>
+        <select id="modele">
+          <option value="base">Rapide</option>
+          <option value="small" selected>Normale (recommandée)</option>
+          <option value="medium">Précise (2 à 3 fois plus lent)</option>
+        </select>
+      </div>
+    </div>
+    <label class="field">Traduire en</label>
+    <div class="chips" id="cibles"></div>
+
+    <div class="actions">
+      <button id="btn-go" class="primary" disabled>Traduire</button>
+      <span class="hint">Compte environ 15 à 30 minutes pour une prêche de 45 minutes.</span>
+    </div>
+    <div id="upload-msg"></div>
+  </section>
+
+  <!-- Traductions en cours -->
+  <div id="jobs-wrap" hidden>
+    <h2>En cours</h2>
+    <div id="jobs"></div>
+  </div>
+
+  <!-- Bibliothèque -->
+  <h2>Prêches traduites</h2>
+  <div id="library"><div class="card empty">Connecte-toi dans les réglages pour voir tes prêches.</div></div>
+</main>
+
+<script>
+const LANGS = {
+  zh: 'Chinois', es: 'Espagnol', ru: 'Russe', hi: 'Hindi',
+  en: 'Anglais', fr: 'Français', pt: 'Portugais', ar: 'Arabe',
+};
+const CIBLES = ['zh', 'es', 'ru', 'hi', 'en', 'fr'];
+const PAR_DEFAUT = ['zh', 'es', 'ru', 'hi'];
+const BRANCH = 'preches';
+const WORKFLOW = 'traduire.yml';
+const API = 'https://api.github.com';
+const MAX_MO = 95;
+
+const $ = (s) => document.querySelector(s);
+const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+// ---------- Réglages (gardés dans ce navigateur) ----------
+let cfg = { token: '', repo: 'jamil2002-popo/translation-' };
+try { Object.assign(cfg, JSON.parse(localStorage.getItem('preches-cfg') || '{}')); } catch {}
+const saveCfg = () => { try { localStorage.setItem('preches-cfg', JSON.stringify(cfg)); } catch {} };
+
+// ---------- Appels à l'API GitHub ----------
+async function gh(path, opts = {}) {
+  const r = await fetch(API + path, {
+    ...opts,
+    headers: {
+      Authorization: `Bearer ${cfg.token}`,
+      Accept: 'application/vnd.github+json',
+      'X-GitHub-Api-Version': '2022-11-28',
+      ...(opts.body ? { 'Content-Type': 'application/json' } : {}),
+      ...(opts.headers || {}),
+    },
+    cache: 'no-store',
+  });
+  if (!r.ok) {
+    let msg = r.statusText;
+    try { msg = (await r.json()).message || msg; } catch {}
+    const e = new Error(msg); e.status = r.status; throw e;
+  }
+  if (r.status === 204) return null;
+  return (r.headers.get('content-type') || '').includes('json') ? r.json() : r.blob();
+}
+const repo = (p) => `/repos/${cfg.repo}${p}`;
+const post = (p, body, method = 'POST') => gh(repo(p), { method, body: JSON.stringify(body) });
+
+function erreurLisible(e) {
+  if (e.status === 401) return "Clé d'accès invalide ou expirée. Vérifie-la dans les réglages.";
+  if (e.status === 403) return "La clé n'a pas les bonnes permissions (Actions et Contents en « Read and write »).";
+  if (e.status === 404) return 'Repo introuvable, ou la clé ne donne pas accès à ce repo.';
+  if (e.message === 'Failed to fetch') return 'Pas de connexion internet ?';
+  return e.message;
+}
+
+// Envoi d'un gros fichier avec barre de progression.
+function envoyerBlob(base64, onProgress) {
+  return new Promise((resolve, reject) => {
+    const x = new XMLHttpRequest();
+    x.open('POST', API + repo('/git/blobs'));
+    x.setRequestHeader('Authorization', `Bearer ${cfg.token}`);
+    x.setRequestHeader('Accept', 'application/vnd.github+json');
+    x.setRequestHeader('Content-Type', 'application/json');
+    x.upload.onprogress = (e) => e.lengthComputable && onProgress(e.loaded / e.total);
+    x.onload = () => {
+      if (x.status < 300) return resolve(JSON.parse(x.responseText));
+      let msg = x.statusText; try { msg = JSON.parse(x.responseText).message; } catch {}
+      const e = new Error(msg); e.status = x.status; reject(e);
+    };
+    x.onerror = () => reject(new Error('Failed to fetch'));
+    x.send(JSON.stringify({ content: base64, encoding: 'base64' }));
+  });
+}
+
+async function shaBranche() {
+  try {
+    return (await gh(repo(`/git/ref/heads/${BRANCH}`))).object.sha;
+  } catch (e) {
+    if (e.status !== 404) throw e;
+    // Première utilisation : on crée la branche « preches » à partir de main.
+    const main = await gh(repo('/git/ref/heads/main'));
+    await post('/git/refs', { ref: `refs/heads/${BRANCH}`, sha: main.object.sha });
+    return main.object.sha;
+  }
+}
+
+// Ajoute (sha) ou supprime (sha: null) des fichiers sur la branche en un commit.
+async function commit(entrees, message) {
+  for (let essai = 0; essai < 4; essai++) {
+    const parent = await shaBranche();
+    const c = await gh(repo(`/git/commits/${parent}`));
+    const tree = await post('/git/trees', {
+      base_tree: c.tree.sha,
+      tree: entrees.map(({ path, sha }) => ({ path, mode: '100644', type: 'blob', sha })),
+    });
+    const nouveau = await post('/git/commits', { message, tree: tree.sha, parents: [parent] });
+    try {
+      await post(`/git/refs/heads/${BRANCH}`, { sha: nouveau.sha }, 'PATCH');
+      return;
+    } catch (e) {
+      if (e.status !== 422 || essai === 3) throw e; // quelqu'un a écrit en même temps : on réessaie
+      await new Promise((r) => setTimeout(r, 1500));
+    }
+  }
+}
+
+// ---------- Formulaire d'envoi ----------
+let fichier = null;
+
+function dessinerCibles() {
+  const source = document.querySelector('input[name=source]:checked').value;
+  const coches = new Set([...document.querySelectorAll('#cibles input:checked')].map((i) => i.value));
+  const premiere = !$('#cibles').children.length;
+  $('#cibles').innerHTML = CIBLES.filter((l) => l !== source).map((l) => {
+    const on = premiere ? PAR_DEFAUT.includes(l) : coches.has(l);
+    return `<label class="chip"><input type="checkbox" value="${l}" ${on ? 'checked' : ''}><span>${LANGS[l]}</span></label>`;
+  }).join('');
+  majBouton();
+}
+
+function majBouton() {
+  const n = document.querySelectorAll('#cibles input:checked').length;
+  $('#btn-go').disabled = !fichier || !n;
+}
+
+function choisirFichier(f) {
+  if (!f) return;
+  if (f.size > MAX_MO * 1024 * 1024) {
+    message('#upload-msg', 'err', `Le fichier fait ${(f.size / 1048576).toFixed(0)} Mo : la limite est de ${MAX_MO} Mo. Réduis la qualité du MP3 (ex. 64 kbit/s) et réessaie.`);
+    return;
+  }
+  fichier = f;
+  $('#drop').classList.add('has-file');
+  $('#drop-title').textContent = f.name;
+  $('#drop-sub').textContent = `${(f.size / 1048576).toFixed(1)} Mo — clique pour changer`;
+  $('#upload-msg').innerHTML = '';
+  majBouton();
+}
+
+function message(sel, type, texte) {
+  $(sel).innerHTML = texte ? `<div class="notice ${type}">${esc(texte)}</div>` : '';
+}
+
+function lireBase64(f) {
+  return new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = () => resolve(r.result.slice(r.result.indexOf(',') + 1));
+    r.onerror = () => reject(r.error);
+    r.readAsDataURL(f);
+  });
+}
+
+function identifiant(nomFichier) {
+  const base = nomFichier.replace(/\.[^.]+$/, '')
+    .normalize('NFD').replace(/[̀-ͯ]/g, '')
+    .replace(/[^a-zA-Z0-9_-]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 60) || 'preche';
+  const d = new Date(), p = (n) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}_${p(d.getHours())}${p(d.getMinutes())}_${base}`;
+}
+
+async function lancer() {
+  if (!cfg.token) { ouvrirReglages(); return; }
+  const btn = $('#btn-go');
+  btn.disabled = true;
+  const id = identifiant(fichier.name);
+  const ext = (fichier.name.match(/\.[a-zA-Z0-9]+$/) || ['.mp3'])[0].toLowerCase();
+  const chemin = `entrees/${id}${ext}`;
+  const langues = [...document.querySelectorAll('#cibles input:checked')].map((i) => i.value);
+  const source = document.querySelector('input[name=source]:checked').value;
+  const modele = $('#modele').value;
+
+  const carte = ajouterJob(id, 'Envoi du fichier…');
+  try {
+    const b64 = await lireBase64(fichier);
+    const blob = await envoyerBlob(b64, (p) => carte.progression(p * 0.9, `Envoi du fichier… ${Math.round(p * 100)} %`));
+    carte.progression(0.95, 'Enregistrement…');
+    await commit([{ path: chemin, sha: blob.sha }], `Nouvelle prêche : ${fichier.name}`);
+    carte.progression(1, 'Démarrage de la traduction…');
+    await post(`/actions/workflows/${WORKFLOW}/dispatches`, {
+      ref: 'main',
+      inputs: { fichier: chemin, langues: langues.join(' '), source, modele },
+    });
+    carte.attente();
+    // Réinitialise le formulaire
+    fichier = null; $('#file').value = '';
+    $('#drop').classList.remove('has-file');
+    $('#drop-title').textContent = 'Dépose ton MP3 ici';
+    $('#drop-sub').textContent = 'ou clique pour choisir un fichier (MP3, M4A, WAV — 95 Mo max)';
+    setTimeout(suivreTravaux, 4000);
+  } catch (e) {
+    carte.erreur(erreurLisible(e));
+  }
+  majBouton();
+}
+
+// ---------- Suivi des traductions en cours ----------
+const jobs = new Map(); // id -> carte
+
+function ajouterJob(id, texte) {
+  $('#jobs-wrap').hidden = false;
+  let el = document.getElementById('job-' + id);
+  if (!el) {
+    el = document.createElement('div');
+    el.className = 'card job';
+    el.id = 'job-' + id;
+    el.innerHTML = `
+      <div class="job-head"><span class="job-title">${esc(titre(id))}</span><span class="hint temps"></span></div>
+      <div class="bar"><div></div></div>
+      <div class="status"></div>`;
+    $('#jobs').prepend(el);
+  }
+  const bar = el.querySelector('.bar'), st = el.querySelector('.status');
+  const carte = {
+    el,
+    progression(p, t) { bar.classList.remove('indeterminate'); bar.firstElementChild.style.width = `${p * 100}%`; st.className = 'status'; st.textContent = t; },
+    attente(t = 'En attente d\'un serveur GitHub…') { bar.classList.add('indeterminate'); st.className = 'status'; st.textContent = t; },
+    erreur(t, lien) { bar.classList.remove('indeterminate'); bar.firstElementChild.style.width = '0'; st.className = 'status err'; st.innerHTML = esc(t) + (lien ? ` <a href="${esc(lien)}" target="_blank" rel="noopener">Voir le détail</a>` : ''); },
+    temps(t) { el.querySelector('.temps').textContent = t; },
+  };
+  carte.progression(0, texte);
+  jobs.set(id, carte);
+  return carte;
+}
+
+function retirerJob(id) {
+  const c = jobs.get(id);
+  if (c) c.el.remove();
+  jobs.delete(id);
+  $('#jobs-wrap').hidden = !jobs.size;
+}
+
+const ETAPES = {
+  'Préparation': 'Préparation du serveur…',
+  'Récupération de la prêche': 'Préparation du serveur…',
+  'Installation de Python': 'Installation des outils…',
+  'Cache du modèle Whisper': 'Installation des outils…',
+  'Installation des outils': 'Installation des outils…',
+  'Transcription, traduction et voix': 'Écoute de la prêche, traduction et enregistrement des voix…',
+  'Enregistrement des résultats': 'Enregistrement des fichiers…',
+};
+
+let suiviTimer = null;
+async function suivreTravaux() {
+  clearTimeout(suiviTimer);
+  if (!cfg.token) return;
+  let actifs = 0;
+  try {
+    const { workflow_runs: runs } = await gh(repo(`/actions/workflows/${WORKFLOW}/runs?per_page=15`));
+    const depuis = Date.now() - 24 * 3600 * 1000;
+    for (const run of runs) {
+      const m = (run.display_title || '').match(/entrees\/([^ ]+)\.[a-z0-9]+$/i);
+      if (!m) continue;
+      const id = m[1];
+      const debut = new Date(run.run_started_at || run.created_at);
+      if (run.status !== 'completed') {
+        actifs++;
+        const carte = jobs.get(id) || ajouterJob(id, '');
+        const minutes = Math.max(0, Math.round((Date.now() - debut) / 60000));
+        carte.temps(`${minutes} min`);
+        if (run.status === 'queued' || run.status === 'pending' || run.status === 'waiting') {
+          carte.attente(run.status === 'queued' ? 'En file d\'attente (une traduction à la fois)…' : undefined);
+        } else {
+          const { jobs: js } = await gh(repo(`/actions/runs/${run.id}/jobs`));
+          const steps = (js[0] && js[0].steps) || [];
+          const total = steps.length || 1;
+          const fini = steps.filter((s) => s.status === 'completed').length;
+          const enCours = steps.find((s) => s.status === 'in_progress');
+          const texte = (enCours && ETAPES[enCours.name]) || 'Traduction en cours…';
+          if (enCours && enCours.name === 'Transcription, traduction et voix') {
+            carte.attente(texte);
+          } else {
+            carte.progression(Math.max(0.05, fini / total), texte);
+          }
+        }
+      } else if (jobs.has(id) || new Date(run.updated_at) > depuis) {
+        if (run.conclusion === 'success') {
+          if (jobs.has(id)) { retirerJob(id); chargerBibliotheque(); }
+        } else if (run.conclusion !== 'cancelled' && new Date(run.updated_at) > depuis) {
+          const carte = jobs.get(id) || ajouterJob(id, '');
+          carte.erreur('La traduction a échoué.', run.html_url);
+        }
+      }
+    }
+  } catch (e) {
+    console.warn(e);
+  }
+  // Tant qu'une traduction est en cours, on vérifie toutes les 15 secondes.
+  if (actifs) suiviTimer = setTimeout(suivreTravaux, 15000);
+}
+
+// ---------- Bibliothèque des prêches traduites ----------
+function titre(id) {
+  const m = id.match(/^(\d{4})-(\d{2})-(\d{2})_(\d{2})(\d{2})_(.*)$/);
+  return m ? m[6].replace(/[-_]+/g, ' ') : id;
+}
+function dateDe(id) {
+  const m = id.match(/^(\d{4})-(\d{2})-(\d{2})_(\d{2})(\d{2})_/);
+  if (!m) return '';
+  return new Date(+m[1], m[2] - 1, +m[3], +m[4], +m[5])
+    .toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
+}
+
+async function chargerBibliotheque() {
+  const lib = $('#library');
+  if (!cfg.token) { lib.innerHTML = '<div class="card empty">Connecte-toi dans les réglages pour voir tes prêches.</div>'; return; }
+  let dossiers;
+  try {
+    dossiers = (await gh(repo(`/contents/resultats?ref=${BRANCH}`))).filter((d) => d.type === 'dir');
+  } catch (e) {
+    if (e.status === 404) { lib.innerHTML = '<div class="card empty">Aucune prêche traduite pour le moment.</div>'; return; }
+    lib.innerHTML = `<div class="notice err">${esc(erreurLisible(e))}</div>`; return;
+  }
+  if (!dossiers.length) { lib.innerHTML = '<div class="card empty">Aucune prêche traduite pour le moment.</div>'; return; }
+  dossiers.sort((a, b) => b.name.localeCompare(a.name));
+  const cartes = await Promise.all(dossiers.map(async (d) => {
+    const fichiers = await gh(repo(`/contents/${d.path}?ref=${BRANCH}`));
+    const par = {};
+    for (const f of fichiers) {
+      const m = f.name.match(/\.([a-z]{2})\.(mp3|txt)$/);
+      if (m) (par[m[1]] ||= {})[m[2]] = f;
+    }
+    const lignes = Object.keys(par)
+      .sort((a, b) => (par[b].mp3 ? 1 : 0) - (par[a].mp3 ? 1 : 0) || CIBLES.indexOf(a) - CIBLES.indexOf(b))
+      .map((l) => {
+        const { mp3, txt } = par[l];
+        const nom = LANGS[l] || l.toUpperCase();
+        return `<div class="lang">
+          <span class="badge">${l.toUpperCase()}</span>
+          <span>${esc(nom)}${mp3 ? '' : ' <span class="hint">(texte original)</span>'}</span>
+          <span class="lang-btns">
+            ${mp3 ? `<button class="small" data-play="${esc(mp3.path)}">Écouter</button>
+                     <button class="small" data-dl="${esc(mp3.path)}" data-name="${esc(mp3.name)}">Télécharger</button>` : ''}
+            ${txt ? `<button class="small" data-txt="${esc(txt.path)}">Texte</button>` : ''}
+          </span>
+        </div>`;
+      }).join('');
+    return `<div class="card sermon">
+      <div class="sermon-head">
+        <span class="sermon-title">${esc(titre(d.name))}</span>
+        <span class="hint">${esc(dateDe(d.name))} · <button class="link" data-del="${esc(d.name)}">Supprimer</button></span>
+      </div>${lignes}</div>`;
+  }));
+  lib.innerHTML = cartes.join('');
+}
+
+const cacheAudio = new Map();
+async function telecharger(path) {
+  if (!cacheAudio.has(path)) {
+    const blob = await gh(repo(`/contents/${encodeURI(path)}?ref=${BRANCH}`), { headers: { Accept: 'application/vnd.github.raw' } });
+    cacheAudio.set(path, blob);
+  }
+  return cacheAudio.get(path);
+}
+
+$('#library').addEventListener('click', async (ev) => {
+  const b = ev.target.closest('button');
+  if (!b) return;
+  const ligne = b.closest('.lang');
+  const ancien = b.textContent;
+  try {
+    if (b.dataset.play) {
+      const existant = ligne.querySelector('audio');
+      if (existant) { existant.remove(); b.textContent = 'Écouter'; return; }
+      b.textContent = 'Chargement…'; b.disabled = true;
+      const blob = await telecharger(b.dataset.play);
+      const audio = document.createElement('audio');
+      audio.controls = true;
+      audio.src = URL.createObjectURL(new Blob([blob], { type: 'audio/mpeg' }));
+      ligne.append(audio);
+      audio.play().catch(() => {});
+      b.textContent = 'Fermer'; b.disabled = false;
+    } else if (b.dataset.dl) {
+      b.textContent = 'Chargement…'; b.disabled = true;
+      const blob = await telecharger(b.dataset.dl);
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(new Blob([blob], { type: 'audio/mpeg' }));
+      a.download = b.dataset.name;
+      document.body.append(a); a.click(); a.remove();
+      b.textContent = ancien; b.disabled = false;
+    } else if (b.dataset.txt) {
+      const existant = ligne.querySelector('pre');
+      if (existant) { existant.remove(); return; }
+      b.textContent = 'Chargement…'; b.disabled = true;
+      const blob = await gh(repo(`/contents/${encodeURI(b.dataset.txt)}?ref=${BRANCH}`), { headers: { Accept: 'application/vnd.github.raw' } });
+      const pre = document.createElement('pre');
+      pre.textContent = await blob.text();
+      ligne.append(pre);
+      b.textContent = ancien; b.disabled = false;
+    } else if (b.dataset.del) {
+      const id = b.dataset.del;
+      if (!confirm(`Supprimer « ${titre(id)} » et toutes ses traductions ?`)) return;
+      b.textContent = 'Suppression…';
+      const res = await gh(repo(`/contents/resultats/${encodeURIComponent(id)}?ref=${BRANCH}`));
+      let entrees = [];
+      try { entrees = (await gh(repo(`/contents/entrees?ref=${BRANCH}`))).filter((f) => f.name.startsWith(id + '.')); } catch {}
+      await commit([...res, ...entrees].map((f) => ({ path: f.path, sha: null })), `Suppression : ${id}`);
+      chargerBibliotheque();
+    }
+  } catch (e) {
+    b.textContent = ancien; b.disabled = false;
+    alert(erreurLisible(e));
+  }
+});
+
+// ---------- Réglages ----------
+function ouvrirReglages() {
+  $('#settings').hidden = false;
+  $('#token').value = cfg.token;
+  $('#repo').value = cfg.repo;
+  $('#token').focus();
+}
+$('#btn-settings').onclick = () => ($('#settings').hidden ? ouvrirReglages() : ($('#settings').hidden = true));
+$('#btn-save').onclick = async () => {
+  cfg.token = $('#token').value.trim();
+  cfg.repo = $('#repo').value.trim().replace(/^https:\/\/github\.com\//, '').replace(/\/$/, '');
+  const msg = $('#settings-msg');
+  msg.className = 'status'; msg.textContent = 'Vérification…';
+  try {
+    await gh(repo(''));
+    await gh(repo(`/actions/workflows/${WORKFLOW}`));
+    saveCfg();
+    msg.className = 'status ok'; msg.textContent = 'Connecté ✓';
+    setTimeout(() => { $('#settings').hidden = true; msg.textContent = ''; }, 900);
+    chargerBibliotheque();
+    suivreTravaux();
+  } catch (e) {
+    msg.className = 'status err'; msg.textContent = erreurLisible(e);
+  }
+};
+
+// ---------- Glisser-déposer ----------
+const drop = $('#drop');
+drop.onclick = () => $('#file').click();
+drop.onkeydown = (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); $('#file').click(); } };
+$('#file').onchange = (e) => choisirFichier(e.target.files[0]);
+['dragenter', 'dragover'].forEach((t) => drop.addEventListener(t, (e) => { e.preventDefault(); drop.classList.add('over'); }));
+['dragleave', 'drop'].forEach((t) => drop.addEventListener(t, (e) => { e.preventDefault(); drop.classList.remove('over'); }));
+drop.addEventListener('drop', (e) => choisirFichier(e.dataTransfer.files[0]));
+document.querySelectorAll('input[name=source]').forEach((r) => (r.onchange = dessinerCibles));
+$('#cibles').addEventListener('change', majBouton);
+$('#btn-go').onclick = lancer;
+
+// ---------- Démarrage ----------
+dessinerCibles();
+if (cfg.token) { chargerBibliotheque(); suivreTravaux(); } else { ouvrirReglages(); }
+</script>
+</body>
+</html>

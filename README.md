@@ -17,7 +17,24 @@ textes zh / es / ru / hi
 preche.zh.mp3  preche.es.mp3  preche.ru.mp3  preche.hi.mp3
 ```
 
-## Installation (une seule fois)
+## La façon simple : la page `index.html`
+
+Tu déposes ton MP3 dans une page web. GitHub fait tout le travail gratuitement sur ses serveurs, puis tu écoutes ou télécharges les traductions dans la même page. Il n'y a rien à installer.
+
+**Une seule fois :**
+1. Sur GitHub, ouvre `index.html` puis clique sur l'icône **Download raw file** (flèche vers le bas). Garde le fichier où tu veux, par exemple sur ton Bureau.
+2. Double-clique dessus : la page s'ouvre dans ton navigateur.
+3. Elle demande une **clé d'accès GitHub** et explique comment la créer (2 minutes).
+
+**À chaque prêche :** glisse le MP3 dans la page et clique sur **Traduire**. Compte 15 à 30 minutes pour 45 minutes de prêche. Tu peux fermer la page et revenir plus tard.
+
+Les fichiers sont rangés sur la branche `preches` du repo (`entrees/` pour les MP3 reçus, `resultats/` pour les traductions). Le plan gratuit de GitHub donne 2000 minutes de calcul par mois sur un repo privé, soit environ 60 à 100 prêches.
+
+Pour une meilleure traduction avec Gemini, ajoute ta clé gratuite comme secret `GEMINI_API_KEY` dans *Settings → Secrets and variables → Actions*. Le workflow l'utilise alors automatiquement.
+
+## La façon manuelle : sur ton ordinateur
+
+### Installation (une seule fois)
 
 1. Installe [Python 3.10 ou plus récent](https://www.python.org/downloads/). Sous Windows, coche « Add Python to PATH ».
 2. Dans un terminal, depuis le dossier du projet :
@@ -32,7 +49,7 @@ source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-## Utilisation
+### Utilisation
 
 ```bash
 python traduire_preche.py ma_preche.mp3
