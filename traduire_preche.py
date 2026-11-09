@@ -54,10 +54,13 @@ def lire_audio(audio: Path):
 
     import numpy as np
 
-    if not shutil.which("ffmpeg"):
-        return str(audio)  # pas de ffmpeg : on laisse faster-whisper décoder
+    ffmpeg = shutil.which("ffmpeg")
+    if not ffmpeg:
+        # ffmpeg fourni par le paquet pip imageio-ffmpeg (aucune installation système)
+        import imageio_ffmpeg
+        ffmpeg = imageio_ffmpeg.get_ffmpeg_exe()
     brut = subprocess.run(
-        ["ffmpeg", "-nostdin", "-loglevel", "error", "-i", str(audio),
+        [ffmpeg, "-nostdin", "-loglevel", "error", "-i", str(audio),
          "-f", "s16le", "-ac", "1", "-ar", "16000", "-"],
         check=True, capture_output=True,
     ).stdout
