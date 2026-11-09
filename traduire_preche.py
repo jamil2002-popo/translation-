@@ -243,7 +243,7 @@ def traduire(texte: str, source: str, langue: str, moteur: str) -> str:
 VOIX_SECOURS = {
     "zh": ["zh-CN-YunxiNeural", "zh-CN-YunjianNeural", "zh-CN-YunyangNeural", "zh-CN-XiaoxiaoNeural"],
     "es": ["es-MX-JorgeNeural", "es-ES-AlvaroNeural", "es-US-AlonsoNeural", "es-MX-DaliaNeural"],
-    "ru": ["ru-RU-DmitryNeural", "ru-RU-SvetlanaNeural", "ru-RU-DariyaNeural"],
+    "ru": ["ru-RU-DmitryNeural", "en-US-AndrewMultilingualNeural", "en-US-BrianMultilingualNeural", "ru-RU-SvetlanaNeural"],
     "hi": ["hi-IN-MadhurNeural", "hi-IN-SwaraNeural"],
 }
 
@@ -255,7 +255,7 @@ async def voix_candidates(langue: str, preferee: str) -> list[str]:
     liste = [preferee] + VOIX_SECOURS.get(langue, [])
     try:
         code = LANGUES[langue][0].split("-")[0]
-        toutes = await edge_tts.list_voices()
+        toutes = await asyncio.wait_for(edge_tts.list_voices(), timeout=60)
         hommes = [v["ShortName"] for v in toutes
                   if v["Locale"].startswith(code + "-") and v.get("Gender") == "Male"]
         autres = [v["ShortName"] for v in toutes if v["Locale"].startswith(code + "-")]
@@ -265,45 +265,55 @@ async def voix_candidates(langue: str, preferee: str) -> list[str]:
     return list(dict.fromkeys(liste))  # sans doublons, dans l'ordre
 
 
-async def synthese(texte: str, voix: str, sortie: Path, vitesse: str):
+async def un_morceau(morceau: str, voix: str, vitesse: str) -> bytes:
     import edge_tts
 
-    # Morceau par morceau, puis concaténation des MP3 (même format) :
-    # évite les coupures sur les très longs textes.
+    async def generer():
+        tampon = bytearray()
+        async for bloc in edge_tts.Communicate(morceau, voix, rate=vitesse).stream():
+            if bloc["type"] == "audio":
+                tampon.extend(bloc["data"])
+        if not tampon:
+            raise RuntimeError("aucun son reçu")
+        return bytes(tampon)
+
+    # Le service bloque parfois sans répondre : on coupe au bout de 2 minutes.
+    return await asyncio.wait_for(generer(), timeout=120)
+
+
+async def lire_a_voix_haute(texte: str, langue: str, preferee: str, sortie: Path, vitesse: str):
+    """Lit le texte morceau par morceau et concatène les MP3 (même format).
+
+    Le service de voix refuse parfois un morceau au hasard : chaque morceau est
+    réessayé plusieurs fois, puis lu par une voix de secours si besoin."""
+    voix = await voix_candidates(langue, preferee)
+    print(f"[3/3] Voix {voix[0]}…")
     morceaux = decouper(texte, 1500)
+    secours = 0
     with open(sortie, "wb") as f:
         for i, morceau in enumerate(morceaux, 1):
             print(f"\r      … morceau {i}/{len(morceaux)}", end="", flush=True)
-            for essai in range(3):
-                try:
-                    tampon = bytearray()
-                    comm = edge_tts.Communicate(morceau, voix, rate=vitesse)
-                    async for bloc in comm.stream():
-                        if bloc["type"] == "audio":
-                            tampon.extend(bloc["data"])
-                    f.write(tampon)
-                    break
-                except Exception as e:
-                    if essai == 2:
-                        raise
-                    print(f"\n      Erreur voix ({e}), nouvel essai…")
-                    await asyncio.sleep(3 * (essai + 1))
+            for n, v in enumerate(voix[:4]):
+                essais = 6 if n == 0 else 3
+                for essai in range(essais):
+                    try:
+                        f.write(await un_morceau(morceau, v, vitesse))
+                        break
+                    except Exception as e:
+                        print(f"\n      Morceau {i}, voix {v} : {str(e)[:80] or type(e).__name__}"
+                              f" (essai {essai + 1}/{essais})")
+                        await asyncio.sleep(5 * (essai + 1))
+                else:
+                    continue  # tous les essais ont échoué : voix suivante
+                if n:
+                    secours += 1
+                break
+            else:
+                sortie.unlink(missing_ok=True)
+                raise RuntimeError(f"aucune voix n'a pu lire le morceau {i}")
     print()
-
-
-async def lire_a_voix_haute(texte: str, langue: str, preferee: str, sortie: Path, vitesse: str) -> str:
-    """Essaie les voix une par une ; renvoie celle qui a fonctionné."""
-    derniere = None
-    for voix in await voix_candidates(langue, preferee):
-        print(f"[3/3] Voix {voix}…")
-        try:
-            await synthese(texte, voix, sortie, vitesse)
-            return voix
-        except Exception as e:
-            derniere = e
-            sortie.unlink(missing_ok=True)
-            print(f"      La voix {voix} ne fonctionne pas ({e}). Essai d'une autre voix…")
-    raise RuntimeError(f"Aucune voix n'a fonctionné : {derniere}")
+    if secours:
+        print(f"      ({secours} morceau(x) lu(s) par une voix de secours)")
 
 
 # --------------------------------------------------------------------------
