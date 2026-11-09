@@ -114,6 +114,33 @@ def decouper(texte: str, taille: int = TAILLE_MORCEAU) -> list[str]:
     return morceaux
 
 
+def traduire_gtx(texte: str, source: str, cible: str) -> str:
+    """Google Traduction via translate.googleapis.com (gratuit, sans clé)."""
+    import requests
+
+    url = "https://translate.googleapis.com/translate_a/single"
+    resultat = []
+    for morceau in decouper(texte):
+        for essai in range(5):
+            try:
+                r = requests.post(
+                    url,
+                    params={"client": "gtx", "sl": source, "tl": cible, "dt": "t"},
+                    data={"q": morceau},
+                    timeout=60,
+                )
+                r.raise_for_status()
+                resultat.append("".join(s[0] for s in r.json()[0] if s[0]))
+                break
+            except Exception as e:
+                if essai == 4:
+                    raise
+                print(f"      Erreur ({e}), nouvel essai…")
+                time.sleep(5 * 2 ** essai)
+        time.sleep(1)
+    return " ".join(resultat)
+
+
 def traduire_google(texte: str, source: str, cible: str) -> str:
     from deep_translator import GoogleTranslator
 
@@ -169,7 +196,11 @@ def traduire(texte: str, source: str, langue: str, moteur: str) -> str:
     code_google = LANGUES[langue][0]
     if moteur == "gemini":
         return traduire_gemini(texte, source, NOMS_ANGLAIS[langue])
-    return traduire_google(texte, source, code_google)
+    try:
+        return traduire_gtx(texte, source, code_google)
+    except Exception as e:
+        print(f"      Première méthode impossible ({e}), essai d'une autre…")
+        return traduire_google(texte, source, code_google)
 
 
 # --------------------------------------------------------------------------
