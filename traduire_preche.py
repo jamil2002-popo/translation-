@@ -164,8 +164,24 @@ def traduire_google(texte: str, source: str, cible: str) -> str:
 _MODELE_GEMINI = None
 
 
+def _gemini(client, modele: str, prompt: str) -> str:
+    """Un appel Gemini avec une réflexion « faible » : 10 fois plus rapide,
+    et largement suffisant pour traduire."""
+    from google.genai import types
+
+    try:
+        config = types.GenerateContentConfig(
+            thinking_config=types.ThinkingConfig(thinking_level="low"))
+        return client.models.generate_content(model=modele, contents=prompt, config=config).text
+    except Exception as e:
+        if "INVALID_ARGUMENT" not in str(e):
+            raise
+        # Modèle qui ne gère pas ce réglage : appel normal.
+        return client.models.generate_content(model=modele, contents=prompt).text
+
+
 def modele_gemini(client) -> str:
-    """Choisit le modèle Gemini « flash » le plus récent qui répond.
+    """Choisit le modèle Gemini « flash » le plus récent qui répond vite.
 
     Les noms de modèles changent souvent : on les découvre au lieu de les figer.
     La variable GEMINI_MODELE permet d'en imposer un."""
@@ -187,23 +203,32 @@ def modele_gemini(client) -> str:
             noms.append(nom)
     noms.sort(key=version, reverse=True)
     for nom in noms:
+        debut = time.time()
         try:
-            client.models.generate_content(model=nom, contents="Say OK.")
-            print(f"      Modèle Gemini : {nom}")
-            _MODELE_GEMINI = nom
-            return nom
+            _gemini(client, nom, "Translate to Spanish, output only the translation: God is love.")
         except Exception as e:
             print(f"      ({nom} indisponible : {str(e)[:80]})")
+            continue
+        duree = time.time() - debut
+        if duree > 45:
+            print(f"      ({nom} trop lent : {duree:.0f} s)")
+            continue
+        print(f"      Modèle Gemini : {nom} ({duree:.0f} s)")
+        _MODELE_GEMINI = nom
+        return nom
     raise RuntimeError("aucun modèle Gemini flash disponible avec cette clé")
 
 
 def traduire_gemini(texte: str, source: str, cible_nom: str) -> str:
     from google import genai
+    from google.genai import types
 
-    client = genai.Client(api_key=os.environ["GEMINI_API_KEY"])
+    # Délai maximum de 3 minutes par requête : le service bloque parfois.
+    client = genai.Client(api_key=os.environ["GEMINI_API_KEY"],
+                          http_options=types.HttpOptions(timeout=180_000))
     modele = modele_gemini(client)
     resultat = []
-    morceaux = decouper(texte, 8000)
+    morceaux = decouper(texte, 5000)
     for i, morceau in enumerate(morceaux, 1):
         print(f"\r      … partie {i}/{len(morceaux)}", end="", flush=True)
         prompt = (
@@ -212,13 +237,12 @@ def traduire_gemini(texte: str, source: str, cible_nom: str) -> str:
             f"references using the standard Bible names of that language. "
             f"Output only the translation, nothing else.\n\n{morceau}"
         )
-        for essai in range(5):
+        for essai in range(4):
             try:
-                rep = client.models.generate_content(model=modele, contents=prompt)
-                resultat.append(rep.text.strip())
+                resultat.append(_gemini(client, modele, prompt).strip())
                 break
             except Exception as e:
-                if essai == 4:
+                if essai == 3:
                     raise
                 print(f"\n      Erreur Gemini ({str(e)[:120]}), nouvel essai…")
                 time.sleep(20 * (essai + 1))  # limite gratuite : quelques requêtes par minute
