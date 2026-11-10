@@ -161,30 +161,68 @@ def traduire_google(texte: str, source: str, cible: str) -> str:
     return " ".join(resultat)
 
 
+_MODELE_GEMINI = None
+
+
+def modele_gemini(client) -> str:
+    """Choisit le modèle Gemini « flash » le plus récent qui répond.
+
+    Les noms de modèles changent souvent : on les découvre au lieu de les figer.
+    La variable GEMINI_MODELE permet d'en imposer un."""
+    global _MODELE_GEMINI
+    if _MODELE_GEMINI:
+        return _MODELE_GEMINI
+    if os.environ.get("GEMINI_MODELE"):
+        _MODELE_GEMINI = os.environ["GEMINI_MODELE"]
+        return _MODELE_GEMINI
+
+    def version(nom):
+        m = re.search(r"gemini-(\d+(?:\.\d+)?)-flash$", nom)
+        return tuple(int(x) for x in m.group(1).split(".")) if m else None
+
+    noms = []
+    for m in client.models.list():
+        nom = m.name.split("/")[-1]
+        if version(nom) is not None and "generateContent" in (m.supported_actions or []):
+            noms.append(nom)
+    noms.sort(key=version, reverse=True)
+    for nom in noms:
+        try:
+            client.models.generate_content(model=nom, contents="Say OK.")
+            print(f"      Modèle Gemini : {nom}")
+            _MODELE_GEMINI = nom
+            return nom
+        except Exception as e:
+            print(f"      ({nom} indisponible : {str(e)[:80]})")
+    raise RuntimeError("aucun modèle Gemini flash disponible avec cette clé")
+
+
 def traduire_gemini(texte: str, source: str, cible_nom: str) -> str:
     from google import genai
 
     client = genai.Client(api_key=os.environ["GEMINI_API_KEY"])
+    modele = modele_gemini(client)
     resultat = []
-    for morceau in decouper(texte, 8000):
+    morceaux = decouper(texte, 8000)
+    for i, morceau in enumerate(morceaux, 1):
+        print(f"\r      … partie {i}/{len(morceaux)}", end="", flush=True)
         prompt = (
             f"Translate this Christian sermon excerpt from '{source}' into "
             f"{cible_nom}. Keep the tone of a preacher, translate Bible "
             f"references using the standard Bible names of that language. "
             f"Output only the translation, nothing else.\n\n{morceau}"
         )
-        for essai in range(4):
+        for essai in range(5):
             try:
-                rep = client.models.generate_content(
-                    model=os.environ.get("GEMINI_MODELE", "gemini-flash-latest"), contents=prompt
-                )
+                rep = client.models.generate_content(model=modele, contents=prompt)
                 resultat.append(rep.text.strip())
                 break
             except Exception as e:
-                if essai == 3:
+                if essai == 4:
                     raise
-                print(f"      Erreur Gemini ({e}), nouvel essai…")
-                time.sleep(10 * (essai + 1))
+                print(f"\n      Erreur Gemini ({str(e)[:120]}), nouvel essai…")
+                time.sleep(20 * (essai + 1))  # limite gratuite : quelques requêtes par minute
+    print()
     return "\n".join(resultat)
 
 
