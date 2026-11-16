@@ -396,7 +396,10 @@ async def lire_a_voix_haute(texte: str, langue: str, preferee: str, sortie: Path
     print(f"[3/3] Voix {voix[0]}…")
     morceaux = decouper(texte, 1500)
     secours = 0
-    with open(sortie, "wb") as f:
+    # On écrit dans un fichier temporaire, renommé seulement une fois complet :
+    # un arrêt en plein milieu ne laisse jamais un MP3 à moitié fait.
+    partiel = sortie.with_name(sortie.name + ".partiel")
+    with open(partiel, "wb") as f:
         for i, morceau in enumerate(morceaux, 1):
             print(f"\r      … morceau {i}/{len(morceaux)}", end="", flush=True)
             for n, v in enumerate(voix[:4]):
@@ -415,8 +418,9 @@ async def lire_a_voix_haute(texte: str, langue: str, preferee: str, sortie: Path
                     secours += 1
                 break
             else:
-                sortie.unlink(missing_ok=True)
+                partiel.unlink(missing_ok=True)
                 raise RuntimeError(f"aucune voix n'a pu lire le morceau {i}")
+    partiel.replace(sortie)
     print()
     if secours:
         print(f"      ({secours} morceau(x) lu(s) par une voix de secours)")
