@@ -11,37 +11,45 @@ jobs:
         with: { ref: preches, path: preches, sparse-checkout: resultats, fetch-depth: 1 }
       - uses: actions/setup-python@v5
         with: { python-version: "3.12" }
-      - run: pip install edge-tts
+      - run: pip install edge-tts piper-tts
       - shell: python
         run: |
           import sys; sys.path.insert(0, ".")
-          import asyncio, glob, time, edge_tts, traduire_preche as t
+          import asyncio, glob, time, os, subprocess, wave, edge_tts, traduire_preche as t
           txt = open(glob.glob("preches/resultats/*Better-Late*/*.ru.txt")[0], encoding="utf-8").read()
-          async def un(m, v="ru-RU-DmitryNeural"):
+          os.makedirs("echantillons", exist_ok=True)
+          extrait = t.decouper(txt, 700)[1]
+          async def un(m, v, fichier=None):
               async def g():
                   b = bytearray()
                   async for x in edge_tts.Communicate(m, v).stream():
                       if x["type"] == "audio": b.extend(x["data"])
                   if not b: raise RuntimeError("vide")
-                  return len(b)
-              t0 = time.time()
-              try: await asyncio.wait_for(g(), 40); return True, time.time() - t0
-              except Exception as e: return False, time.time() - t0
+                  return b
+              try:
+                  b = await asyncio.wait_for(g(), 30)
+                  if fichier: open(fichier, "wb").write(b)
+                  return True
+              except Exception: return False
           async def main():
-              for taille in (1500, 600, 300):
-                  ms = t.decouper(txt, taille)[:24 if taille == 1500 else 40]
-                  res = [await un(m) for m in ms]
-                  ok = sum(r[0] for r in res); d = sum(r[1] for r in res if r[0]) / max(ok, 1)
-                  print(f"RESULTAT {taille} car. : {ok}/{len(ms)} réussis, {d:.1f} s par morceau réussi, échecs en {sum(r[1] for r in res if not r[0]):.0f} s")
-              # Morceaux refusés à 1500 : réessayés une fois, puis redécoupés en 3
-              ms = t.decouper(txt, 1500)[:24]
-              rec = 0; total = 0
-              for m in ms:
-                  if (await un(m))[0]: continue
-                  total += 1
-                  if (await un(m))[0]: print("RESULTAT refusé puis OK au 2e essai"); rec += 1; continue
-                  sous = t.decouper(m, 500)
-                  r = [await un(x) for x in sous]
-                  print(f"RESULTAT refusé 2 fois, redécoupé : {sum(x[0] for x in r)}/{len(sous)}")
-              print(f"RESULTAT bilan : {total} refusés au 1er essai")
+              ms = t.decouper(txt, 1500)[:18]
+              for v in ["ru-RU-SvetlanaNeural", "ru-RU-DmitryNeural"]:
+                  t0 = time.time(); ok = sum([await un(m, v) for m in ms])
+                  print(f"RESULTAT {v}: {ok}/{len(ms)} en {time.time()-t0:.0f} s")
+              for v in ["ru-RU-SvetlanaNeural", "ru-RU-DmitryNeural"]:
+                  for _ in range(4):
+                      if await un(extrait, v, f"echantillons/microsoft-{v.split('-')[2]}.mp3"): break
           asyncio.run(main())
+          base = "https://huggingface.co/rhasspy/piper-voices/resolve/main/ru/ru_RU"
+          for nom in ["ruslan", "denis", "dmitri"]:
+              for ext in ("onnx", "onnx.json"):
+                  subprocess.run(["curl", "-sSLf", "-o", f"{nom}.{ext}", f"{base}/{nom}/medium/ru_RU-{nom}-medium.{ext}"], check=True)
+              t0 = time.time()
+              subprocess.run(["piper", "-m", f"{nom}.onnx", "-f", f"{nom}.wav"], input=txt[:15000].encode(), check=True, capture_output=True)
+              d = time.time() - t0
+              with wave.open(f"{nom}.wav") as w: duree = w.getnframes() / w.getframerate()
+              print(f"RESULTAT piper {nom}: {len(txt[:15000])} caractères -> {duree/60:.1f} min d'audio en {d:.0f} s")
+              subprocess.run(["piper", "-m", f"{nom}.onnx", "-f", f"e-{nom}.wav"], input=extrait.encode(), check=True, capture_output=True)
+              subprocess.run(["ffmpeg", "-loglevel", "error", "-y", "-i", f"e-{nom}.wav", "-b:a", "64k", f"echantillons/piper-{nom}.mp3"], check=True)
+      - uses: actions/upload-artifact@v4
+        with: { name: echantillons, path: echantillons }
