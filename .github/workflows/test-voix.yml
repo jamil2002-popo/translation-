@@ -1,0 +1,46 @@
+name: test-voix
+on: push
+jobs:
+  t:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env: { PYTHONUNBUFFERED: "1" }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with: { ref: preches, path: preches, sparse-checkout: resultats, fetch-depth: 1 }
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - run: pip install edge-tts
+      - shell: python
+        run: |
+          import asyncio, glob, time, edge_tts, traduire_preche as t
+          txt = open(glob.glob("preches/resultats/*Better-Late*/*.ru.txt")[0], encoding="utf-8").read()
+          async def un(m, v="ru-RU-DmitryNeural"):
+              async def g():
+                  b = bytearray()
+                  async for x in edge_tts.Communicate(m, v).stream():
+                      if x["type"] == "audio": b.extend(x["data"])
+                  if not b: raise RuntimeError("vide")
+                  return len(b)
+              t0 = time.time()
+              try: await asyncio.wait_for(g(), 40); return True, time.time() - t0
+              except Exception as e: return False, time.time() - t0
+          async def main():
+              for taille in (1500, 600, 300):
+                  ms = t.decouper(txt, taille)[:24 if taille == 1500 else 40]
+                  res = [await un(m) for m in ms]
+                  ok = sum(r[0] for r in res); d = sum(r[1] for r in res if r[0]) / max(ok, 1)
+                  print(f"RESULTAT {taille} car. : {ok}/{len(ms)} réussis, {d:.1f} s par morceau réussi, échecs en {sum(r[1] for r in res if not r[0]):.0f} s")
+              # Morceaux refusés à 1500 : réessayés une fois, puis redécoupés en 3
+              ms = t.decouper(txt, 1500)[:24]
+              rec = 0; total = 0
+              for m in ms:
+                  if (await un(m))[0]: continue
+                  total += 1
+                  if (await un(m))[0]: print("RESULTAT refusé puis OK au 2e essai"); rec += 1; continue
+                  sous = t.decouper(m, 500)
+                  r = [await un(x) for x in sous]
+                  print(f"RESULTAT refusé 2 fois, redécoupé : {sum(x[0] for x in r)}/{len(sous)}")
+              print(f"RESULTAT bilan : {total} refusés au 1er essai")
+          asyncio.run(main())
