@@ -221,7 +221,7 @@
 
     <div class="actions">
       <button id="btn-go" class="primary" disabled>Traduire</button>
-      <span class="hint">Compte environ 15 à 30 minutes pour une prêche de 45 minutes.</span>
+      <span class="hint">Compte environ 1 h 30 pour une prêche de 45 minutes. La page affiche une estimation pendant la traduction.</span>
     </div>
     <div id="upload-msg"></div>
   </section>
@@ -530,9 +530,67 @@ const ETAPES = {
   'Installation de Python': 'Installation des outils…',
   'Cache du modèle Whisper': 'Installation des outils…',
   'Installation des outils': 'Installation des outils…',
-  'Transcription, traduction et voix': 'Écoute de la prêche, traduction et enregistrement des voix…',
+  'Transcription, traduction et voix': 'écoute, traduction et voix',
   'Enregistrement des résultats': 'Enregistrement des fichiers…',
 };
+
+// ---------- Estimation du temps restant ----------
+// Le temps de traduction dépend surtout de la longueur de la prêche, donc de la
+// taille du MP3. La page mesure les dernières traductions réussies pour connaître
+// le nombre de minutes par Mo, et s'en sert pour estimer les traductions en cours.
+const MINUTES_PAR_MO_DEFAUT = 2.6; // mesuré sur les premières prêches
+const PREPARATION_MIN = 3;         // démarrage du serveur et installation des outils
+let minutesParMo = null;
+let taillesEntrees = null; // id -> taille du MP3 envoyé (Mo)
+
+async function tailles() {
+  if (taillesEntrees) return taillesEntrees;
+  taillesEntrees = {};
+  try {
+    for (const f of await gh(repo(`/contents/entrees?ref=${BRANCH}`))) {
+      const id = f.name.replace(/\.[a-z0-9]+(\.part\d+)?$/i, '');
+      taillesEntrees[id] = (taillesEntrees[id] || 0) + f.size / 1048576;
+    }
+  } catch {}
+  return taillesEntrees;
+}
+
+async function calibrer(runs) {
+  if (minutesParMo) return minutesParMo;
+  minutesParMo = MINUTES_PAR_MO_DEFAUT;
+  try {
+    const t = await tailles();
+    const ratios = [];
+    for (const run of runs.filter((r) => r.conclusion === 'success').slice(0, 5)) {
+      const id = idDuRun(run), mo = t[id];
+      if (!mo) continue;
+      const { jobs: js } = await gh(repo(`/actions/runs/${run.id}/jobs`));
+      const etape = ((js[0] && js[0].steps) || []).find((s) => s.name === 'Transcription, traduction et voix');
+      if (!etape || !etape.started_at || !etape.completed_at) continue;
+      const minutes = (new Date(etape.completed_at) - new Date(etape.started_at)) / 60000;
+      // Une relance partielle (une seule langue, transcription déjà faite) fausserait la moyenne.
+      if (minutes / mo > 1) ratios.push(minutes / mo);
+    }
+    if (ratios.length) {
+      ratios.sort((x, y) => x - y);
+      minutesParMo = Math.min(6, Math.max(1, ratios[Math.floor(ratios.length / 2)]));
+    }
+  } catch (e) { console.warn(e); }
+  return minutesParMo;
+}
+
+function idDuRun(run) {
+  const m = (run.display_title || '').match(/entrees\/([^ ]+)\.[a-z0-9]+$/i);
+  return m && m[1];
+}
+
+function duree(min) {
+  if (min < 1.5) return 'moins de 2 min';
+  if (min < 60) return `environ ${Math.round(min)} min`;
+  const h = Math.floor(min / 60), m = Math.round((min % 60) / 5) * 5;
+  return m ? `environ ${h} h ${String(m).padStart(2, '0')}` : `environ ${h} h`;
+}
+const heure = (d) => d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }).replace(':', ' h ');
 
 let suiviTimer = null;
 async function suivreTravaux() {
@@ -542,36 +600,55 @@ async function suivreTravaux() {
   try {
     const { workflow_runs: runs } = await gh(repo(`/actions/workflows/${WORKFLOW}/runs?per_page=15`));
     const depuis = Date.now() - 24 * 3600 * 1000;
+    if (runs.some((r) => r.status !== 'completed')) {
+      taillesEntrees = null; // une nouvelle prêche a pu être envoyée
+      await calibrer(runs);
+    }
     for (const run of runs) {
-      const m = (run.display_title || '').match(/entrees\/([^ ]+)\.[a-z0-9]+$/i);
-      if (!m) continue;
-      const id = m[1];
-      const debut = new Date(run.run_started_at || run.created_at);
+      const id = idDuRun(run);
+      if (!id) continue;
       if (run.status !== 'completed') {
         actifs++;
         const carte = jobs.get(id) || ajouterJob(id, '');
-        const minutes = Math.max(0, Math.round((Date.now() - debut) / 60000));
-        carte.temps(`${minutes} min`);
         if (run.status === 'queued' || run.status === 'pending' || run.status === 'waiting') {
+          carte.temps('');
           carte.attente(run.status === 'queued' ? 'En file d\'attente chez GitHub…' : undefined);
+          continue;
+        }
+        const { jobs: js } = await gh(repo(`/actions/runs/${run.id}/jobs`));
+        const job = js[0] || {};
+        const steps = job.steps || [];
+        const enCours = steps.find((s) => s.status === 'in_progress');
+        const etape = (enCours && ETAPES[enCours.name]) || 'Traduction en cours…';
+        const debut = new Date(job.started_at || run.run_started_at || run.created_at);
+        const ecoule = (Date.now() - debut) / 60000;
+        const mo = (await tailles())[id];
+
+        if (!mo) { // taille inconnue : pas d'estimation possible
+          carte.temps('');
+          carte.attente(etape);
+          continue;
+        }
+        const total = PREPARATION_MIN + mo * minutesParMo;
+        const enregistrement = enCours && enCours.name === 'Enregistrement des résultats';
+        const p = enregistrement ? 0.98 : Math.min(0.95, Math.max(0.02, ecoule / total));
+        const reste = total - ecoule;
+        if (enregistrement) {
+          carte.progression(p, 'Presque fini : enregistrement des fichiers…');
+          carte.temps('');
+        } else if (reste > 0) {
+          carte.progression(p, `${duree(reste)} restantes · ${etape.replace(/…$/, '').toLowerCase()}`);
+          carte.temps(`fin vers ${heure(new Date(debut.getTime() + total * 60000))}`);
         } else {
-          const { jobs: js } = await gh(repo(`/actions/runs/${run.id}/jobs`));
-          const steps = (js[0] && js[0].steps) || [];
-          const total = steps.length || 1;
-          const fini = steps.filter((s) => s.status === 'completed').length;
-          const enCours = steps.find((s) => s.status === 'in_progress');
-          const texte = (enCours && ETAPES[enCours.name]) || 'Traduction en cours…';
-          if (enCours && enCours.name === 'Transcription, traduction et voix') {
-            carte.attente(texte);
-          } else {
-            carte.progression(Math.max(0.05, fini / total), texte);
-          }
+          carte.progression(p, 'Ça prend un peu plus longtemps que prévu, presque fini…');
+          carte.temps('');
         }
       } else if (jobs.has(id) || new Date(run.updated_at) > depuis) {
         if (run.conclusion === 'success') {
           if (jobs.has(id)) { retirerJob(id); chargerBibliotheque(); }
         } else if (run.conclusion !== 'cancelled' && new Date(run.updated_at) > depuis) {
           const carte = jobs.get(id) || ajouterJob(id, '');
+          carte.temps('');
           carte.erreur('La traduction a échoué.', run.html_url);
         }
       }

@@ -26,7 +26,7 @@ Tu déposes ton MP3 dans une page web. GitHub fait tout le travail gratuitement 
 2. Double-clique dessus : la page s'ouvre dans ton navigateur.
 3. Elle demande une **clé d'accès GitHub** et explique comment la créer (2 minutes).
 
-**À chaque prêche :** glisse un ou plusieurs MP3 dans la page et clique sur **Traduire**. Les fichiers sont envoyés un par un, puis traduits en parallèle sur GitHub. Compte 15 à 30 minutes pour 45 minutes de prêche. Tu peux fermer la page et revenir plus tard.
+**À chaque prêche :** glisse un ou plusieurs MP3 dans la page et clique sur **Traduire**. Les fichiers sont envoyés un par un, puis traduits en parallèle sur GitHub. Compte environ 1 h 30 pour 45 minutes de prêche ; la page affiche le temps restant estimé. Tu peux fermer la page et revenir plus tard.
 
 **Suppression automatique :** chaque jour, le workflow `nettoyage.yml` supprime les prêches envoyées il y a plus de 30 jours (MP3 reçus et traductions), puis compacte l'historique de la branche pour que GitHub libère vraiment la place. La page indique la date de suppression de chaque prêche. Pour changer la durée, modifie `30` dans `.github/workflows/nettoyage.yml` et `CONSERVATION_JOURS` dans `index.html`.
 
