@@ -1,6 +1,10 @@
 name: Traduire une prêche
 
 # Lancé par index.html (bouton « Traduire »), ou à la main depuis l'onglet Actions.
+#
+# 1. Transcription : un serveur écoute la prêche (Whisper).
+# 2. Langues : un serveur par langue, toutes en parallèle (traduction + voix).
+# 3. Enregistrement : les fichiers sont rangés sur la branche preches.
 on:
   workflow_dispatch:
     inputs:
@@ -29,16 +33,21 @@ concurrency:
   group: preches-${{ inputs.fichier }}
   cancel-in-progress: false
 
+env:
+  FICHIER: ${{ inputs.fichier }}
+  LANGUES: ${{ inputs.langues }}
+  SOURCE: ${{ inputs.source }}
+  MODELE: ${{ inputs.modele }}
+  PYTHONUNBUFFERED: "1"
+
 jobs:
-  traduire:
+  transcription:
+    name: Transcription
     runs-on: ubuntu-latest
-    timeout-minutes: 300
-    env:
-      FICHIER: ${{ inputs.fichier }}
-      LANGUES: ${{ inputs.langues }}
-      SOURCE: ${{ inputs.source }}
-      MODELE: ${{ inputs.modele }}
-      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+    timeout-minutes: 150
+    outputs:
+      nom: ${{ steps.transcrire.outputs.nom }}
+      matrice: ${{ steps.transcrire.outputs.matrice }}
     steps:
       - name: Préparation
         uses: actions/checkout@v4
@@ -63,14 +72,10 @@ jobs:
           key: whisper-${{ inputs.modele }}
 
       - name: Installation des outils
-        run: |
-          pip install -r requirements.txt
-          # Traduction locale de secours (NLLB), version CPU de PyTorch (plus légère)
-          pip install torch --index-url https://download.pytorch.org/whl/cpu
-          pip install transformers sentencepiece
-          if [ -n "$GEMINI_API_KEY" ]; then pip install google-genai; fi
+        run: pip install -r requirements.txt
 
       - name: Transcription
+        id: transcrire
         run: |
           set -euo pipefail
           case "$FICHIER" in entrees/*) ;; *) echo "Chemin invalide : $FICHIER"; exit 1;; esac
@@ -81,71 +86,120 @@ jobs:
             ls -lh "preches/$FICHIER"
           fi
           NOM="$(basename "$FICHIER")"; NOM="${NOM%.*}"
-          MOTEUR=google
-          if [ -n "$GEMINI_API_KEY" ]; then MOTEUR=gemini; fi
-          echo "NOM=$NOM" >> "$GITHUB_ENV"
-          echo "MOTEUR=$MOTEUR" >> "$GITHUB_ENV"
           python traduire_preche.py "preches/$FICHIER" --transcription-seule \
             --source "$SOURCE" --modele "$MODELE" --sortie "preches/resultats/$NOM"
+          # Une tâche par langue, sauf celles déjà terminées (MP3 présent) lors d'un essai précédent.
+          MATRICE=$(NOM="$NOM" python3 - <<'PY'
+          import json, os
+          noms = {"zh": "Chinois", "es": "Espagnol", "ru": "Russe", "hi": "Hindi", "en": "Anglais", "fr": "Français"}
+          nom, source = os.environ["NOM"], os.environ["SOURCE"]
+          a_faire = []
+          for code in os.environ["LANGUES"].split():
+              mp3 = f"preches/resultats/{nom}/{nom}.{code}.mp3"
+              if code in noms and code != source and not (os.path.exists(mp3) and os.path.getsize(mp3) > 0):
+                  a_faire.append({"code": code, "nom": noms[code]})
+          print(json.dumps(a_faire, ensure_ascii=False))
+          PY
+          )
+          echo "Langues à faire : $MATRICE"
+          echo "nom=$NOM" >> "$GITHUB_OUTPUT"
+          echo "matrice=$MATRICE" >> "$GITHUB_OUTPUT"
 
-      # Une étape par langue : la page suit l'avancement de chacune.
-      # continue-on-error : une langue en échec n'empêche pas les suivantes.
-      - name: Chinois
-        id: zh
-        if: ${{ contains(format(' {0} ', inputs.langues), ' zh ') }}
-        continue-on-error: true
-        run: python traduire_preche.py "preches/$FICHIER" --langues zh --source "$SOURCE" --moteur "$MOTEUR" --sortie "preches/resultats/$NOM"
+      - name: Envoi de la transcription aux autres serveurs
+        uses: actions/upload-artifact@v4
+        with:
+          name: textes
+          path: preches/resultats/${{ steps.transcrire.outputs.nom }}/*.txt
+          retention-days: 2
 
-      - name: Espagnol
-        id: es
-        if: ${{ contains(format(' {0} ', inputs.langues), ' es ') }}
-        continue-on-error: true
-        run: python traduire_preche.py "preches/$FICHIER" --langues es --source "$SOURCE" --moteur "$MOTEUR" --sortie "preches/resultats/$NOM"
+  langue:
+    name: ${{ matrix.nom }}
+    needs: transcription
+    if: needs.transcription.outputs.matrice != '[]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 150
+    strategy:
+      fail-fast: false  # une langue en échec n'arrête pas les autres
+      matrix:
+        include: ${{ fromJSON(needs.transcription.outputs.matrice) }}
+    env:
+      NOM: ${{ needs.transcription.outputs.nom }}
+      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+    steps:
+      - name: Préparation
+        uses: actions/checkout@v4
 
-      - name: Russe
-        id: ru
-        if: ${{ contains(format(' {0} ', inputs.langues), ' ru ') }}
-        continue-on-error: true
-        run: python traduire_preche.py "preches/$FICHIER" --langues ru --source "$SOURCE" --moteur "$MOTEUR" --sortie "preches/resultats/$NOM"
+      - name: Installation de Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
 
-      - name: Hindi
-        id: hi
-        if: ${{ contains(format(' {0} ', inputs.langues), ' hi ') }}
-        continue-on-error: true
-        run: python traduire_preche.py "preches/$FICHIER" --langues hi --source "$SOURCE" --moteur "$MOTEUR" --sortie "preches/resultats/$NOM"
+      - name: Installation des outils
+        run: |
+          pip install -r requirements.txt
+          if [ -n "$GEMINI_API_KEY" ]; then pip install google-genai; fi
 
-      - name: Anglais
-        id: en
-        if: ${{ contains(format(' {0} ', inputs.langues), ' en ') }}
-        continue-on-error: true
-        run: python traduire_preche.py "preches/$FICHIER" --langues en --source "$SOURCE" --moteur "$MOTEUR" --sortie "preches/resultats/$NOM"
+      - name: Récupération de la transcription
+        uses: actions/download-artifact@v4
+        with:
+          name: textes
+          path: sortie/${{ needs.transcription.outputs.nom }}
 
-      - name: Français
-        id: fr
-        if: ${{ contains(format(' {0} ', inputs.langues), ' fr ') }}
-        continue-on-error: true
-        run: python traduire_preche.py "preches/$FICHIER" --langues fr --source "$SOURCE" --moteur "$MOTEUR" --sortie "preches/resultats/$NOM"
+      - name: Traduction et voix
+        run: |
+          MOTEUR=google
+          if [ -n "$GEMINI_API_KEY" ]; then MOTEUR=gemini; fi
+          python traduire_preche.py "entrees/$NOM.mp3" --langues ${{ matrix.code }} \
+            --source "$SOURCE" --moteur "$MOTEUR" --sortie "sortie/$NOM"
 
-      # Même en cas d'échec, on garde ce qui est fini (ex. la transcription) :
-      # la prochaine tentative reprendra là où ça s'est arrêté.
-      - name: Enregistrement des résultats
+      - name: Envoi du résultat
         if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: langue-${{ matrix.code }}
+          path: sortie/${{ needs.transcription.outputs.nom }}/*.${{ matrix.code }}.*
+          if-no-files-found: ignore
+          retention-days: 2
+
+  enregistrement:
+    name: Enregistrement
+    needs: [transcription, langue]
+    # Même si une langue a échoué, on garde tout ce qui est fini :
+    # le prochain essai reprendra là où ça s'est arrêté.
+    if: always() && needs.transcription.outputs.nom != ''
+    runs-on: ubuntu-latest
+    env:
+      NOM: ${{ needs.transcription.outputs.nom }}
+    steps:
+      - name: Récupération des prêches
+        uses: actions/checkout@v4
+        with:
+          ref: preches
+          path: preches
+          fetch-depth: 1
+
+      - name: Récupération des résultats
+        uses: actions/download-artifact@v4
+        with:
+          path: recus
+          merge-multiple: true
+
+      - name: Enregistrement des résultats
         working-directory: preches
         run: |
           set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          NOM="$(basename "$FICHIER")"; NOM="${NOM%.*}"
-          if [ ! -d "resultats/$NOM" ]; then echo "Rien à enregistrer"; exit 0; fi
-          cp -r "resultats/$NOM" "$RUNNER_TEMP/resultat"
+          ls -la ../recus
           # On repart toujours de la dernière version de la branche (une autre prêche
           # a pu finir, ou le nettoyage a pu compacter l'historique) et on y ajoute
-          # uniquement le dossier de cette prêche.
+          # uniquement les fichiers de cette prêche.
           for i in 1 2 3 4 5 6; do
             git fetch --depth=1 origin +refs/heads/preches:refs/remotes/origin/preches
             git checkout -q -f -B enregistrement origin/preches
-            rm -rf "resultats/$NOM"; mkdir -p resultats
-            cp -r "$RUNNER_TEMP/resultat" "resultats/$NOM"
+            mkdir -p "resultats/$NOM"
+            cp ../recus/* "resultats/$NOM/"
             git add -f "resultats/$NOM"  # -f : le .gitignore ignore les *.mp3
             if git diff --cached --quiet; then echo "Rien de nouveau"; exit 0; fi
             git commit -q -m "Résultats : $FICHIER"
@@ -157,8 +211,8 @@ jobs:
       - name: Vérification
         if: always()
         run: |
-          echo "zh=${{ steps.zh.outcome }} es=${{ steps.es.outcome }} ru=${{ steps.ru.outcome }} hi=${{ steps.hi.outcome }} en=${{ steps.en.outcome }} fr=${{ steps.fr.outcome }}"
-          if echo "${{ steps.zh.outcome }} ${{ steps.es.outcome }} ${{ steps.ru.outcome }} ${{ steps.hi.outcome }} ${{ steps.en.outcome }} ${{ steps.fr.outcome }}" | grep -q failure; then
+          echo "Transcription : ${{ needs.transcription.result }} — langues : ${{ needs.langue.result }}"
+          if [ "${{ needs.transcription.result }}" != "success" ] || [ "${{ needs.langue.result }}" = "failure" ]; then
             echo "Au moins une langue a échoué : relance la traduction pour la réessayer."
             exit 1
           fi

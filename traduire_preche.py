@@ -72,7 +72,8 @@ def transcrire(audio: Path, modele: str, langue_source: str) -> str:
 
     print(f"[1/3] Transcription de {audio.name} (modèle Whisper « {modele} »)…")
     print("      La première fois, le modèle est téléchargé (quelques centaines de Mo).")
-    model = WhisperModel(modele, device="auto", compute_type="int8")
+    model = WhisperModel(modele, device="auto", compute_type="int8",
+                         cpu_threads=os.cpu_count() or 4)
     segments, info = model.transcribe(
         lire_audio(audio), language=langue_source, vad_filter=True, beam_size=5
     )
@@ -121,7 +122,7 @@ def traduire_gtx(texte: str, source: str, cible: str) -> str:
     url = "https://translate.googleapis.com/translate_a/single"
     resultat = []
     for morceau in decouper(texte):
-        for essai in range(4):
+        for essai in range(3):
             try:
                 r = requests.post(
                     url,
@@ -133,9 +134,9 @@ def traduire_gtx(texte: str, source: str, cible: str) -> str:
                 resultat.append("".join(s[0] for s in r.json()[0] if s[0]))
                 break
             except Exception as e:
-                if essai == 3:
+                if essai == 2:
                     raise
-                attente = 15 * 2 ** essai  # 15 s, 30 s, 1 min
+                attente = 10 * (essai + 1)  # 10 s, 20 s
                 print(f"      Erreur ({e}), nouvel essai dans {attente} s…")
                 time.sleep(attente)
         time.sleep(2)
@@ -219,51 +220,76 @@ def modele_gemini(client) -> str:
     raise RuntimeError("aucun modèle Gemini flash disponible avec cette clé")
 
 
+class QuotaEpuise(Exception):
+    """Le quota gratuit (journalier) de Gemini est épuisé : inutile d'insister."""
+
+
+_CLIENT_GEMINI = None
+
+
 def traduire_gemini(texte: str, source: str, cible_nom: str) -> str:
+    """Traduit un morceau avec Gemini. Lève QuotaEpuise si le quota du jour est atteint."""
+    global _CLIENT_GEMINI
     from google import genai
     from google.genai import types
 
-    # Délai maximum de 3 minutes par requête : le service bloque parfois.
-    client = genai.Client(api_key=os.environ["GEMINI_API_KEY"],
-                          http_options=types.HttpOptions(timeout=180_000))
+    if _CLIENT_GEMINI is None:
+        # Délai maximum de 3 minutes par requête : le service bloque parfois.
+        _CLIENT_GEMINI = genai.Client(api_key=os.environ["GEMINI_API_KEY"],
+                                      http_options=types.HttpOptions(timeout=180_000))
+    client = _CLIENT_GEMINI
     modele = modele_gemini(client)
-    resultat = []
-    morceaux = decouper(texte, 5000)
-    for i, morceau in enumerate(morceaux, 1):
-        print(f"\r      … partie {i}/{len(morceaux)}", end="", flush=True)
-        prompt = (
-            f"Translate this Christian sermon excerpt from '{source}' into "
-            f"{cible_nom}. Keep the tone of a preacher, translate Bible "
-            f"references using the standard Bible names of that language. "
-            f"Output only the translation, nothing else.\n\n{morceau}"
-        )
-        for essai in range(4):
-            try:
-                resultat.append(_gemini(client, modele, prompt).strip())
-                break
-            except Exception as e:
-                if essai == 3:
-                    raise
-                print(f"\n      Erreur Gemini ({str(e)[:120]}), nouvel essai…")
-                time.sleep(20 * (essai + 1))  # limite gratuite : quelques requêtes par minute
-    print()
-    return "\n".join(resultat)
+    prompt = (
+        f"Translate this Christian sermon excerpt from '{source}' into "
+        f"{cible_nom}. Keep the tone of a preacher, translate Bible "
+        f"references using the standard Bible names of that language. "
+        f"Output only the translation, nothing else.\n\n{texte}"
+    )
+    for essai in range(4):
+        try:
+            return _gemini(client, modele, prompt).strip()
+        except Exception as e:
+            msg = str(e)
+            if "RESOURCE_EXHAUSTED" in msg and re.search(r"per ?day|PerDay|daily", msg, re.I):
+                raise QuotaEpuise(msg[:120]) from e
+            if essai == 3:
+                raise
+            # Limite par minute : Gemini indique combien de secondes attendre.
+            m = re.search(r"retry(?:Delay)?\D{0,12}(\d+(?:\.\d+)?)\s*s", msg, re.I)
+            attente = min(65, float(m.group(1)) + 2) if m else 15 * (essai + 1)
+            print(f"      Gemini occupé ({msg[:80]}), nouvel essai dans {attente:.0f} s…")
+            time.sleep(attente)
 
 
 # Codes de langue du modèle NLLB (traduction locale de secours)
 NLLB_CODES = {"zh": "zho_Hans", "es": "spa_Latn", "ru": "rus_Cyrl", "hi": "hin_Deva",
               "en": "eng_Latn", "fr": "fra_Latn", "pt": "por_Latn", "ar": "arb_Arab"}
 NLLB_MODELE = "facebook/nllb-200-distilled-600M"
+_NLLB = None
 
 
 def traduire_nllb(texte: str, source: str, cible: str) -> str:
     """Traduction locale avec NLLB (Meta) : gratuite, sans limite, un peu moins bonne."""
+    try:
+        import torch  # noqa: F401
+        import transformers  # noqa: F401
+    except ImportError:
+        # Installé seulement quand on en a besoin (1 à 2 min), pour ne pas ralentir les autres cas.
+        import subprocess
+        print("      Installation de la traduction locale (PyTorch)…", flush=True)
+        subprocess.run([sys.executable, "-m", "pip", "install", "-q", "torch",
+                        "--index-url", "https://download.pytorch.org/whl/cpu"], check=True)
+        subprocess.run([sys.executable, "-m", "pip", "install", "-q", "transformers", "sentencepiece"], check=True)
     import torch
     from transformers import AutoModelForSeq2SeqLM, AutoTokenizer
 
-    print(f"      Traduction locale avec {NLLB_MODELE} (téléchargé la première fois)…")
-    tok = AutoTokenizer.from_pretrained(NLLB_MODELE, src_lang=NLLB_CODES[source])
-    model = AutoModelForSeq2SeqLM.from_pretrained(NLLB_MODELE).eval()
+    global _NLLB
+    if _NLLB is None:
+        print(f"      Traduction locale avec {NLLB_MODELE} (téléchargé la première fois)…")
+        torch.set_num_threads(os.cpu_count() or 4)
+        _NLLB = (AutoTokenizer.from_pretrained(NLLB_MODELE, src_lang=NLLB_CODES[source]),
+                 AutoModelForSeq2SeqLM.from_pretrained(NLLB_MODELE).eval())
+    tok, model = _NLLB
     cible_id = tok.convert_tokens_to_ids(NLLB_CODES[cible])
     segments = decouper(texte, 400)
     resultat = []
@@ -285,17 +311,35 @@ NOMS_ANGLAIS = {"zh": "Simplified Chinese", "es": "Spanish", "ru": "Russian",
 
 
 def traduire(texte: str, source: str, langue: str, moteur: str) -> str:
+    """Traduit morceau par morceau : Gemini (si clé), sinon Google, sinon NLLB local.
+
+    Dès qu'un service refuse (quota épuisé, blocage), il est abandonné pour la
+    suite au lieu d'être réessayé à chaque morceau : c'est ce qui faisait traîner
+    les dernières langues."""
     code_google = LANGUES[langue][0]
-    if moteur == "gemini":
-        try:
-            return traduire_gemini(texte, source, NOMS_ANGLAIS[langue])
-        except Exception as e:
-            print(f"      Gemini a échoué ({e}). Passage à Google…")
-    try:
-        return traduire_gtx(texte, source, code_google)
-    except Exception as e:
-        print(f"      Google refuse ({e}). Traduction locale de secours…")
-    return traduire_nllb(texte, source, langue)
+    gemini_ok, google_ok = moteur == "gemini", True
+    morceaux = decouper(texte, 8000)
+    resultat = []
+    for i, morceau in enumerate(morceaux, 1):
+        print(f"      … partie {i}/{len(morceaux)}", flush=True)
+        if gemini_ok:
+            try:
+                resultat.append(traduire_gemini(morceau, source, NOMS_ANGLAIS[langue]))
+                continue
+            except QuotaEpuise as e:
+                print(f"      Quota Gemini du jour épuisé ({e}). Suite avec Google.")
+                gemini_ok = False
+            except Exception as e:
+                print(f"      Gemini a échoué sur cette partie ({str(e)[:100]}). Google prend le relais.")
+        if google_ok:
+            try:
+                resultat.append(traduire_gtx(morceau, source, code_google))
+                continue
+            except Exception as e:
+                print(f"      Google refuse ({str(e)[:100]}). Suite avec la traduction locale.")
+                google_ok = False
+        resultat.append(traduire_nllb(morceau, source, langue))
+    return "\n".join(resultat)
 
 
 # --------------------------------------------------------------------------
@@ -356,7 +400,7 @@ async def lire_a_voix_haute(texte: str, langue: str, preferee: str, sortie: Path
         for i, morceau in enumerate(morceaux, 1):
             print(f"\r      … morceau {i}/{len(morceaux)}", end="", flush=True)
             for n, v in enumerate(voix[:4]):
-                essais = 6 if n == 0 else 3
+                essais = 3 if n == 0 else 2
                 for essai in range(essais):
                     try:
                         f.write(await un_morceau(morceau, v, vitesse))
@@ -364,7 +408,7 @@ async def lire_a_voix_haute(texte: str, langue: str, preferee: str, sortie: Path
                     except Exception as e:
                         print(f"\n      Morceau {i}, voix {v} : {str(e)[:80] or type(e).__name__}"
                               f" (essai {essai + 1}/{essais})")
-                        await asyncio.sleep(5 * (essai + 1))
+                        await asyncio.sleep(3 * (essai + 1))
                 else:
                     continue  # tous les essais ont échoué : voix suivante
                 if n:
@@ -399,9 +443,6 @@ def main() -> int:
                    help="Faire seulement la transcription (les langues viendront ensuite)")
     args = p.parse_args()
 
-    if not args.audio.exists():
-        print(f"Fichier introuvable : {args.audio}")
-        return 1
     if args.moteur == "gemini" and not os.environ.get("GEMINI_API_KEY"):
         print("Le moteur gemini demande la variable GEMINI_API_KEY "
               "(clé gratuite sur https://aistudio.google.com/apikey).")
@@ -417,6 +458,9 @@ def main() -> int:
         print(f"[1/3] Transcription déjà faite : {fichier_transcription}")
         texte = fichier_transcription.read_text(encoding="utf-8")
     else:
+        if not args.audio.exists():
+            print(f"Fichier introuvable : {args.audio}")
+            return 1
         texte = transcrire(args.audio, args.modele, args.source)
         fichier_transcription.write_text(texte, encoding="utf-8")
         print(f"      → {fichier_transcription}")

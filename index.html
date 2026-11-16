@@ -637,6 +637,20 @@ function identifiant(nomFichier) {
   return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}_${p(d.getHours())}${p(d.getMinutes())}_${base}`;
 }
 
+// Durée de l'audio, lue par le navigateur (null si impossible).
+function dureeAudio(f) {
+  return new Promise((resolve) => {
+    const audio = document.createElement('audio');
+    const url = URL.createObjectURL(f);
+    const fin = (v) => { URL.revokeObjectURL(url); resolve(v); };
+    audio.preload = 'metadata';
+    audio.onloadedmetadata = () => fin(Number.isFinite(audio.duration) ? audio.duration : null);
+    audio.onerror = () => fin(null);
+    setTimeout(() => fin(null), 10000);
+    audio.src = url;
+  });
+}
+
 async function envoyerUne(f, id, reglages) {
   const ext = (f.name.match(/\.[a-zA-Z0-9]+$/) || ['.mp3'])[0].toLowerCase();
   const chemin = `entrees/${id}${ext}`;
@@ -659,6 +673,8 @@ async function envoyerUne(f, id, reglages) {
       // Nom d'origine, pour nommer les MP3 traduits au téléchargement.
       const nom = await post('/git/blobs', { content: f.name, encoding: 'utf-8' });
       parties.push({ path: `entrees/${id}.nom.txt`, sha: nom.sha });
+      const secondes = await dureeAudio(f);
+      if (secondes) parties.push({ path: `entrees/${id}.duree-${Math.round(secondes)}.txt`, sha: nom.sha });
       await commit(parties, `Nouvelle prêche : ${f.name}`);
       carte.progression(1, t('demarrage'));
       await post(`/actions/workflows/${WORKFLOW}/dispatches`, {
@@ -782,53 +798,66 @@ function retirerJob(id) {
 }
 
 // ---------- Estimation du temps restant ----------
-// La durée dépend surtout de la longueur de la prêche, donc de la taille du MP3.
-// Chaque étape a une durée attendue en minutes par Mo, recalculée à partir des
-// dernières traductions réussies (valeurs de départ mesurées sur les premières prêches).
+// La durée dépend surtout de la longueur de la prêche. La page note la durée de
+// l'audio à l'envoi (dans le nom d'un petit fichier « .duree-<secondes>.txt ») ;
+// pour les anciennes prêches, elle l'estime d'après la taille du MP3 (128 kbit/s).
+// Chaque étape a une durée attendue en minutes par minute d'audio, recalculée à
+// partir des dernières traductions réussies.
 const ETAPES_PREPARATION = ['Set up job', 'Préparation', 'Récupération de la prêche', 'Installation de Python', 'Cache du modèle Whisper', 'Installation des outils'];
 const NOMS_LANGUES = { Chinois: 'zh', Espagnol: 'es', Russe: 'ru', Hindi: 'hi', Anglais: 'en', 'Français': 'fr' };
-const MIN_PAR_MO_DEFAUT = {
-  Transcription: 0.45, Chinois: 0.45, Espagnol: 0.45, Russe: 0.55, Hindi: 0.8, Anglais: 0.45, 'Français': 0.45,
-  'Transcription, traduction et voix': 2.6, // ancienne version du workflow, en une seule étape
+const NOM_TACHE = Object.fromEntries(Object.entries(NOMS_LANGUES).map(([n, c]) => [c, n]));
+const MIN_PAR_MIN_DEFAUT = {
+  Transcription: 0.47, Chinois: 0.15, Espagnol: 0.15, Russe: 0.2, Hindi: 0.35, Anglais: 0.15, 'Français': 0.15,
+  'Transcription, traduction et voix': 2.4, // ancienne version du workflow, en une seule étape
 };
-const PREPARATION_MIN = 3, ENREGISTREMENT_MIN = 1, TAILLE_PAR_DEFAUT_MO = 35;
-let minParMo = null;        // nom d'étape -> minutes par Mo
-let taillesEntrees = null;  // id -> taille du MP3 envoyé (Mo)
+const PREPARATION_MIN = 3, DEMARRAGE_LANGUE_MIN = 2, ENREGISTREMENT_MIN = 1.5, DUREE_PAR_DEFAUT_MIN = 40;
+let minParMin = null;     // nom d'étape -> minutes de traitement par minute d'audio
+let dureesAudio = null;   // id -> durée de l'audio (minutes)
 
-async function tailles() {
-  if (taillesEntrees) return taillesEntrees;
-  taillesEntrees = {};
+async function durees() {
+  if (dureesAudio) return dureesAudio;
+  dureesAudio = {};
+  const tailleMo = {};
   try {
     for (const f of await gh(repo(`/contents/entrees?ref=${BRANCH}`))) {
-      if (f.name.endsWith('.nom.txt')) continue;
+      const d = f.name.match(/^(.*)\.duree-(\d+)\.txt$/);
+      if (d) { dureesAudio[d[1]] = +d[2] / 60; continue; }
+      if (f.name.endsWith('.txt')) continue;
       const id = f.name.replace(/\.[a-z0-9]+(\.part\d+)?$/i, '');
-      taillesEntrees[id] = (taillesEntrees[id] || 0) + f.size / 1048576;
+      tailleMo[id] = (tailleMo[id] || 0) + f.size / 1048576;
     }
   } catch {}
-  return taillesEntrees;
+  for (const [id, mo] of Object.entries(tailleMo)) if (!(id in dureesAudio)) dureesAudio[id] = mo * 1.09;
+  return dureesAudio;
 }
 
 const minutes = (a, b) => (new Date(b) - new Date(a)) / 60000;
-const mediane = (l) => { const t = [...l].sort((x, y) => x - y); return t[Math.floor(t.length / 2)]; };
+const mediane = (l) => { const x = [...l].sort((a, b) => a - b); return x[Math.floor(x.length / 2)]; };
 
 async function calibrer(runs) {
-  if (minParMo) return;
-  minParMo = { ...MIN_PAR_MO_DEFAUT };
+  if (minParMin) return;
+  minParMin = { ...MIN_PAR_MIN_DEFAUT };
   try {
-    const parTaille = await tailles();
+    const parId = await durees();
     const mesures = {};
+    const noter = (nom, duree, audio) => { const r = duree / audio; if (r > 0.01) (mesures[nom] ||= []).push(r); };
     for (const run of runs.filter((r) => r.conclusion === 'success').slice(0, 5)) {
-      const mo = parTaille[idDuRun(run)];
-      if (!mo) continue;
+      const audio = parId[idDuRun(run)];
+      if (!audio) continue;
       const { jobs: js } = await gh(repo(`/actions/runs/${run.id}/jobs`));
-      for (const e of (js[0] && js[0].steps) || []) {
-        if (!(e.name in MIN_PAR_MO_DEFAUT) || e.conclusion !== 'success' || !e.started_at || !e.completed_at) continue;
-        const r = minutes(e.started_at, e.completed_at) / mo;
-        if (r > 0.02) (mesures[e.name] ||= []).push(r); // une étape sautée (déjà faite) ne compte pas
+      for (const job of js) {
+        if (job.name in NOMS_LANGUES && job.conclusion === 'success') {
+          noter(job.name, minutes(job.started_at, job.completed_at) - DEMARRAGE_LANGUE_MIN, audio);
+        }
+        for (const e of job.steps || []) {
+          if (e.name in MIN_PAR_MIN_DEFAUT && e.conclusion === 'success' && e.started_at && e.completed_at) {
+            noter(e.name, minutes(e.started_at, e.completed_at), audio);
+          }
+        }
       }
     }
     for (const [nom, l] of Object.entries(mesures)) {
-      minParMo[nom] = Math.min(MIN_PAR_MO_DEFAUT[nom] * 4, Math.max(MIN_PAR_MO_DEFAUT[nom] / 4, mediane(l)));
+      minParMin[nom] = Math.min(MIN_PAR_MIN_DEFAUT[nom] * 4, Math.max(MIN_PAR_MIN_DEFAUT[nom] / 4, mediane(l)));
     }
   } catch (e) { console.warn(e); }
 }
@@ -842,44 +871,61 @@ function languesDuRun(run) {
   return m ? m[1].trim().split(/\s+/) : null;
 }
 
-// Regroupe les étapes GitHub en étapes lisibles et estime l'avancement de chacune.
-function analyserEtapes(steps, mo, langues, source) {
-  const maintenant = Date.now();
-  const groupes = [];
-  const prep = steps.filter((e) => ETAPES_PREPARATION.includes(e.name));
-  groupes.push({ nom: t('prep'), steps: prep, attendu: PREPARATION_MIN });
-  for (const e of steps) {
-    if (!(e.name in MIN_PAR_MO_DEFAUT)) continue;
-    const code = NOMS_LANGUES[e.name];
-    if (code && langues && !langues.includes(code)) continue;
-    if (e.conclusion === 'skipped') continue;
-    groupes.push({
-      nom: e.name === 'Transcription' ? t('transcription') : code ? LANGS[code] : e.name,
-      sous: e.name === 'Transcription' ? (source || '') : code ? NATIF[code] : '',
-      steps: [e], attendu: mo * minParMo[e.name],
-    });
-  }
-  const enr = steps.filter((e) => e.name === 'Enregistrement des résultats');
-  if (enr.length) groupes.push({ nom: t('enreg_etape'), steps: enr, attendu: ENREGISTREMENT_MIN });
+// État et avancement d'une étape (ou d'un groupe d'étapes) à partir de ce que dit GitHub.
+function etatDe(items, attendu) {
+  const vrais = items.filter(Boolean);
+  if (!vrais.length) return { etat: 'attente', p: 0, reste: attendu };
+  if (vrais.some((e) => e.conclusion === 'failure')) return { etat: 'echec', p: 0, reste: 0 };
+  if (vrais.every((e) => e.status === 'completed')) return { etat: 'fait', p: 1, reste: 0 };
+  const commence = vrais.filter((e) => e.started_at && !['queued', 'pending', 'waiting'].includes(e.status));
+  if (!commence.length) return { etat: 'attente', p: 0, reste: attendu };
+  const ecoule = (Date.now() - Math.min(...commence.map((e) => new Date(e.started_at)))) / 60000;
+  return { etat: 'encours', p: Math.min(0.95, ecoule / attendu), reste: Math.max(attendu - ecoule, attendu * 0.05) };
+}
 
-  let reste = 0, enCours = null;
-  const lignes = groupes.map((g) => {
-    const finis = g.steps.every((e) => e.status === 'completed');
-    const commence = g.steps.filter((e) => e.started_at && e.status !== 'pending' && e.status !== 'queued');
-    let etat = 'attente', p = 0;
-    if (g.steps.some((e) => e.conclusion === 'failure')) etat = 'echec';
-    else if (finis && g.steps.length) { etat = 'fait'; p = 1; }
-    else if (commence.length) {
-      etat = 'encours';
-      const debut = Math.min(...commence.map((e) => new Date(e.started_at)));
-      const ecoule = (maintenant - debut) / 60000;
-      p = Math.min(0.95, ecoule / g.attendu);
-      reste += Math.max(g.attendu - ecoule, g.attendu * 0.05);
-      enCours = enCours || g;
-    } else reste += g.attendu;
-    return { nom: g.nom, sous: g.sous, p, etat };
-  });
-  return { lignes, reste, enCours };
+// Regroupe les tâches GitHub en étapes lisibles. Les langues tournent en parallèle :
+// le temps restant compte seulement la plus lente.
+function analyserRun(jobsGithub, audio, langues) {
+  const lignes = [];
+  let resteAvant = 0, resteLangues = 0, resteApres = 0, enCours = null;
+  const ajouter = (nom, sous, items, attendu, zone) => {
+    const r = etatDe(items, attendu);
+    lignes.push({ nom, sous, p: r.p, etat: r.etat });
+    if (r.etat === 'encours' && !enCours) enCours = { nom, sous };
+    if (zone === 'langue') resteLangues = Math.max(resteLangues, r.reste);
+    else if (zone === 'avant') resteAvant += r.reste;
+    else resteApres += r.reste;
+  };
+  const trans = jobsGithub.find((j) => j.name === 'Transcription');
+
+  if (trans) {
+    // Version actuelle : un serveur pour la transcription, puis un par langue.
+    const steps = trans.steps || [];
+    ajouter(t('prep'), '', steps.filter((e) => ETAPES_PREPARATION.includes(e.name)), PREPARATION_MIN, 'avant');
+    ajouter(t('transcription'), '', [steps.find((e) => e.name === 'Transcription') || (trans.status === 'completed' ? trans : null)], audio * minParMin.Transcription, 'avant');
+    for (const code of langues || []) {
+      const nomTache = NOM_TACHE[code];
+      if (!nomTache) continue;
+      let job = jobsGithub.find((j) => j.name === nomTache);
+      // Pas de tâche alors que la transcription est finie : langue déjà faite lors d'un essai précédent.
+      if (!job && trans.status === 'completed' && trans.conclusion === 'success') job = { status: 'completed', conclusion: 'success' };
+      ajouter(LANGS[code], NATIF[code], [job], DEMARRAGE_LANGUE_MIN + audio * minParMin[nomTache], 'langue');
+    }
+    ajouter(t('enreg_etape'), '', [jobsGithub.find((j) => j.name === 'Enregistrement')], ENREGISTREMENT_MIN, 'apres');
+  } else {
+    // Anciennes versions : tout sur un seul serveur, étape par étape.
+    const steps = (jobsGithub[0] && jobsGithub[0].steps) || [];
+    ajouter(t('prep'), '', steps.filter((e) => ETAPES_PREPARATION.includes(e.name)), PREPARATION_MIN, 'avant');
+    for (const e of steps) {
+      if (!(e.name in MIN_PAR_MIN_DEFAUT) || e.conclusion === 'skipped') continue;
+      const code = NOMS_LANGUES[e.name];
+      if (code && langues && !langues.includes(code)) continue;
+      const nom = e.name === 'Transcription' ? t('transcription') : code ? LANGS[code] : e.name;
+      ajouter(nom, code ? NATIF[code] : '', [e], audio * minParMin[e.name], 'avant');
+    }
+    ajouter(t('enreg_etape'), '', steps.filter((e) => e.name === 'Enregistrement des résultats'), ENREGISTREMENT_MIN, 'apres');
+  }
+  return { lignes, reste: resteAvant + resteLangues + resteApres, enCours };
 }
 
 function duree(min) {
@@ -901,7 +947,7 @@ async function suivreTravaux() {
     const { workflow_runs: runs } = await gh(repo(`/actions/workflows/${WORKFLOW}/runs?per_page=15`));
     const depuis = Date.now() - 24 * 3600 * 1000;
     if (runs.some((r) => r.status !== 'completed')) {
-      taillesEntrees = null; // une nouvelle prêche a pu être envoyée
+      dureesAudio = null; // une nouvelle prêche a pu être envoyée
       await calibrer(runs);
     }
     for (const run of runs) {
@@ -914,11 +960,10 @@ async function suivreTravaux() {
           carte.attente(run.status === 'queued' ? t('file_attente') : undefined);
           continue;
         }
-        const { jobs: js } = await gh(repo(`/actions/runs/${run.id}/jobs`));
-        const job = js[0] || {};
-        const mo = (await tailles())[id] || TAILLE_PAR_DEFAUT_MO;
-        const { lignes, reste, enCours } = analyserEtapes(job.steps || [], mo, languesDuRun(run));
-        const debut = new Date(job.started_at || run.run_started_at || run.created_at);
+        const { jobs: js } = await gh(repo(`/actions/runs/${run.id}/jobs?per_page=50`));
+        const audio = (await durees())[id] || DUREE_PAR_DEFAUT_MIN;
+        const { lignes, reste, enCours } = analyserRun(js, audio, languesDuRun(run));
+        const debut = new Date(run.run_started_at || run.created_at);
         const ecoule = (Date.now() - debut) / 60000;
         const p = Math.min(0.97, Math.max(0.01, ecoule / (ecoule + reste)));
         const etape = enCours ? (enCours.sous ? `${enCours.nom} (${enCours.sous})` : enCours.nom) : t('traduction');
