@@ -28,6 +28,8 @@ Tu déposes ton MP3 dans une page web. GitHub fait tout le travail gratuitement 
 
 **À chaque prêche :** glisse un ou plusieurs MP3 dans la page et clique sur **Traduire**. Les fichiers sont envoyés un par un, puis traduits en parallèle sur GitHub. Compte 15 à 30 minutes pour 45 minutes de prêche. Tu peux fermer la page et revenir plus tard.
 
+**Suppression automatique :** chaque jour, le workflow `nettoyage.yml` supprime les prêches envoyées il y a plus de 30 jours (MP3 reçus et traductions), puis compacte l'historique de la branche pour que GitHub libère vraiment la place. La page indique la date de suppression de chaque prêche. Pour changer la durée, modifie `30` dans `.github/workflows/nettoyage.yml` et `CONSERVATION_JOURS` dans `index.html`.
+
 Les fichiers sont rangés sur la branche `preches` du repo (`entrees/` pour les MP3 reçus, `resultats/` pour les traductions). Le plan gratuit de GitHub donne 2000 minutes de calcul par mois sur un repo privé, soit environ 60 à 100 prêches.
 
 Pour une meilleure traduction avec Gemini, ajoute ta clé gratuite comme secret `GEMINI_API_KEY` dans *Settings → Secrets and variables → Actions*. Le workflow l'utilise alors automatiquement.

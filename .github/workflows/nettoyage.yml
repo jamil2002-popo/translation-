@@ -1,0 +1,72 @@
+name: Nettoyage des anciennes prêches
+
+# Chaque jour : supprime les prêches (MP3 reçus et traductions) envoyées il y a
+# plus de 30 jours, puis compacte l'historique de la branche preches pour que
+# GitHub libère vraiment la place. Se lance aussi à la main depuis l'onglet Actions.
+on:
+  schedule:
+    - cron: "23 9 * * *"
+  workflow_dispatch:
+    inputs:
+      jours:
+        description: "Supprimer les prêches envoyées il y a plus de N jours"
+        default: "30"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: nettoyage
+  cancel-in-progress: false
+
+jobs:
+  nettoyer:
+    runs-on: ubuntu-latest
+    env:
+      JOURS: ${{ inputs.jours || '30' }}
+    steps:
+      - name: Récupération des prêches
+        uses: actions/checkout@v4
+        with:
+          ref: preches
+          fetch-depth: 1
+
+      - name: Suppression et compactage
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          for essai in 1 2 3 4 5; do
+            git fetch --depth=1 origin +refs/heads/preches:refs/remotes/origin/preches
+            git checkout -q -B travail origin/preches
+            BASE=$(git rev-parse origin/preches)
+
+            # Les noms commencent par la date d'envoi : AAAA-MM-JJ_HHMM_titre
+            python3 - <<'PY'
+          import os, re, shutil, datetime
+          limite = datetime.date.today() - datetime.timedelta(days=int(os.environ["JOURS"]))
+          print(f"Suppression des prêches envoyées avant le {limite}")
+          for dossier in ("resultats", "entrees"):
+              if not os.path.isdir(dossier):
+                  continue
+              for nom in sorted(os.listdir(dossier)):
+                  m = re.match(r"(\d{4})-(\d{2})-(\d{2})_", nom)
+                  if m and datetime.date(*map(int, m.groups())) < limite:
+                      chemin = os.path.join(dossier, nom)
+                      print("  -", chemin)
+                      shutil.rmtree(chemin) if os.path.isdir(chemin) else os.remove(chemin)
+          PY
+            git add -A -f .
+
+            # Un seul commit sans historique : les anciens fichiers ne prennent plus de place.
+            ARBRE=$(git write-tree)
+            NOUVEAU=$(git commit-tree "$ARBRE" -m "Prêches des $JOURS derniers jours (nettoyage du $(date +%F))")
+            # --force-with-lease : on n'écrase rien si une traduction vient d'enregistrer ses résultats.
+            if git push --force-with-lease=refs/heads/preches:"$BASE" origin "$NOUVEAU":refs/heads/preches; then
+              echo "Nettoyage terminé."
+              exit 0
+            fi
+            echo "La branche a changé pendant le nettoyage, nouvel essai…"
+            sleep $((essai * 20))
+          done
+          exit 1
