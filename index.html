@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Traduction de prêches</title>
+<title>Bethel Baptist Church</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%231c5d6e'/%3E%3Cg stroke='%23fff' stroke-width='2.6' stroke-linecap='round'%3E%3Cpath d='M8 13v6M12.5 9v14M17 12v8M21.5 7v18M26 14v4'/%3E%3C/g%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -30,25 +30,32 @@
     --font-ui: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
     --font-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
     --radius: 10px;
+    --fond-opacite: .22;
   }
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
       --bg: #0e1113; --surface: #161a1d; --surface-2: #1b2024; --ink: #e6eaed; --muted: #9aa3ab;
       --faint: #6f7880; --line: #272d32; --accent: #6cb6c6; --accent-hover: #8ac7d4; --accent-soft: #16292e;
       --accent-ink: #0b1a1e; --ok: #5cc08b; --ok-soft: #14281d; --err: #f2877c; --err-soft: #33191a;
-      color-scheme: dark;
+      --fond-opacite: .12; color-scheme: dark;
     }
   }
   :root[data-theme="dark"] {
     --bg: #0e1113; --surface: #161a1d; --surface-2: #1b2024; --ink: #e6eaed; --muted: #9aa3ab;
     --faint: #6f7880; --line: #272d32; --accent: #6cb6c6; --accent-hover: #8ac7d4; --accent-soft: #16292e;
     --accent-ink: #0b1a1e; --ok: #5cc08b; --ok-soft: #14281d; --err: #f2877c; --err-soft: #33191a;
-    color-scheme: dark;
+    --fond-opacite: .12; color-scheme: dark;
   }
 
   * { box-sizing: border-box; }
   html { -webkit-text-size-adjust: 100%; }
-  body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.5 var(--font-ui); }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.5 var(--font-ui); position: relative; isolation: isolate; }
+  /* Photo de l'église en fond, très atténuée pour garder le texte lisible. */
+  body::before {
+    content: ""; position: fixed; inset: -12px; z-index: -1; pointer-events: none;
+    background: url("data:image/jpeg;base64,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") center / cover no-repeat;
+    opacity: var(--fond-opacite); filter: blur(2px) saturate(.85);
+  }
   [hidden] { display: none !important; }
   a { color: var(--accent); }
   code { font-family: var(--font-mono); font-size: .9em; }
@@ -57,6 +64,9 @@
 
   /* Barre du haut */
   .topbar { background: var(--surface); border-bottom: 1px solid var(--line); }
+  .choix-langue { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; padding: 2px; background: var(--surface-2); }
+  .choix-langue button { border: none; background: none; padding: 4px 9px; font-size: 12px; font-family: var(--font-mono); color: var(--muted); border-radius: 6px; }
+  .choix-langue button[aria-pressed="true"] { background: var(--surface); color: var(--ink); box-shadow: 0 0 0 1px var(--line); }
   .topbar-in, .page {
     max-width: 1120px; margin: 0 auto;
     padding-left: max(16px, env(safe-area-inset-left, 0px));
@@ -224,7 +234,8 @@
   .preche[open] .chevron { transform: rotate(90deg); }
   .preche[open] summary { background: var(--surface-2); }
   .preche-corps { padding: 4px 20px 16px; border-top: 1px solid var(--line); }
-  .preche-pied { padding-top: 12px; font-size: 12.5px; color: var(--muted); display: flex; gap: 6px 12px; flex-wrap: wrap; }
+  .preche-pied { padding-top: 12px; font-size: 12.5px; color: var(--muted); display: flex; align-items: center; gap: 8px 12px; flex-wrap: wrap; }
+  .preche-pied .tout { margin-right: auto; }
   .lang { display: grid; grid-template-columns: 34px minmax(0, 1fr) auto; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--line); }
   .lang-nom { min-width: 0; }
   .lang-nom small { color: var(--muted); margin-left: 6px; }
@@ -253,13 +264,14 @@
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 10v4M8 6v12M12 9v6M16 4v16M20 10v4"/></svg>
       </span>
       <div style="min-width:0">
-        <div class="brand-nom">Traduction de prêches</div>
-        <div class="brand-sous">中文 · Español · Русский · हिन्दी</div>
+        <div class="brand-nom">Bethel Baptist Church</div>
+        <div class="brand-sous"><span data-i18n="sous_titre">Traduction des prêches</span> · 中文 · Español · Русский · हिन्दी</div>
       </div>
     </div>
     <div class="topbar-actions">
-      <span id="connexion" class="etat">Non connecté</span>
-      <button id="btn-settings" type="button">Réglages</button>
+      <span id="connexion" class="etat" data-i18n="non_connecte">Non connecté</span>
+      <div class="choix-langue" role="group" aria-label="Langue / Language"><button type="button" data-ui="fr" aria-pressed="false">FR</button><button type="button" data-ui="en" aria-pressed="false">EN</button></div>
+      <button id="btn-settings" type="button" data-i18n="reglages">Réglages</button>
     </div>
   </div>
 </header>
@@ -267,9 +279,9 @@
 <main class="page">
   <!-- Réglages : clé GitHub -->
   <section id="settings" class="panel" hidden>
-    <h2>Connexion à GitHub</h2>
-    <p class="hint" style="margin:0">La traduction tourne gratuitement sur les serveurs de GitHub. Cette page a besoin d'une clé d'accès, à créer une seule fois :</p>
-    <ol>
+    <h2 data-i18n="settings_titre">Connexion à GitHub</h2>
+    <p class="hint" style="margin:0" data-i18n="settings_intro">La traduction tourne gratuitement sur les serveurs de GitHub. Cette page a besoin d'une clé d'accès, à créer une seule fois :</p>
+    <ol data-i18n-html="settings_etapes">
       <li>Ouvre <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">github.com/settings/personal-access-tokens/new</a>.</li>
       <li>Donne-lui un nom (ex. « Traduction ») et une expiration (ex. 1 an).</li>
       <li><em>Repository access</em> → <em>Only select repositories</em> → <code>translation-</code>.</li>
@@ -277,16 +289,16 @@
       <li>Clique sur <em>Generate token</em>, copie la clé et colle-la ci-dessous.</li>
     </ol>
     <div class="champ">
-      <label class="etiquette" for="token">Clé d'accès GitHub</label>
+      <label class="etiquette" for="token" data-i18n="cle">Clé d'accès GitHub</label>
       <input id="token" type="password" placeholder="github_pat_…" autocomplete="off">
     </div>
     <div class="champ">
       <label class="etiquette" for="repo">Repo</label>
       <input id="repo" type="text" value="jamil2002-popo/translation-">
     </div>
-    <p class="hint" style="margin:0">La clé reste uniquement dans ce navigateur, sur cet ordinateur.</p>
+    <p class="hint" style="margin:0" data-i18n="cle_locale">La clé reste uniquement dans ce navigateur, sur cet ordinateur.</p>
     <div class="actions">
-      <button id="btn-save" class="primary" type="button">Enregistrer</button>
+      <button id="btn-save" class="primary" type="button" data-i18n="enregistrer">Enregistrer</button>
       <span id="settings-msg" class="status"></span>
     </div>
   </section>
@@ -294,43 +306,43 @@
   <div class="grille">
     <!-- Envoi -->
     <section id="upload" class="panel envoi" aria-labelledby="t-envoi">
-      <div class="panel-tete"><h2 id="t-envoi">Nouvelle traduction</h2></div>
+      <div class="panel-tete"><h2 id="t-envoi" data-i18n="nouvelle">Nouvelle traduction</h2></div>
       <div class="panel-corps">
         <div id="drop" class="drop" tabindex="0" role="button" aria-label="Choisir des fichiers audio">
           <svg class="icon" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <path d="M12 16V4M7 9l5-5 5 5"/><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/>
           </svg>
-          <strong id="drop-title">Dépose tes MP3 ici</strong>
-          <span id="drop-sub" class="hint">ou clique pour choisir des fichiers (MP3, M4A, WAV — 500 Mo max chacun)</span>
+          <strong id="drop-title" data-i18n="drop_titre">Dépose tes MP3 ici</strong>
+          <span id="drop-sub" class="hint" data-i18n="drop_sub">ou clique pour choisir des fichiers (MP3, M4A, WAV — 500 Mo max chacun)</span>
           <input id="file" type="file" accept="audio/*,.mp3,.m4a,.wav,.ogg" multiple hidden>
         </div>
         <ul id="liste" class="liste"></ul>
 
         <div class="champ">
-          <span class="etiquette" id="l-source">Langue de la prêche</span>
+          <span class="etiquette" id="l-source" data-i18n="langue_preche">Langue de la prêche</span>
           <div class="segment" id="source" role="radiogroup" aria-labelledby="l-source">
-            <label><input type="radio" name="source" value="en" checked><span>Anglais</span></label>
-            <label><input type="radio" name="source" value="fr"><span>Français</span></label>
+            <label><input type="radio" name="source" value="en" checked><span data-i18n="l_en">Anglais</span></label>
+            <label><input type="radio" name="source" value="fr"><span data-i18n="l_fr">Français</span></label>
           </div>
         </div>
 
         <div class="champ">
-          <span class="etiquette" id="l-cibles">Traduire en</span>
+          <span class="etiquette" id="l-cibles" data-i18n="traduire_en">Traduire en</span>
           <div class="cibles" id="cibles" role="group" aria-labelledby="l-cibles"></div>
         </div>
 
         <div class="champ">
-          <label class="etiquette" for="modele">Qualité de la transcription</label>
+          <label class="etiquette" for="modele" data-i18n="qualite">Qualité de la transcription</label>
           <select id="modele">
-            <option value="base">Rapide</option>
-            <option value="small" selected>Normale (recommandée)</option>
-            <option value="medium">Précise (2 à 3 fois plus lent)</option>
+            <option value="base" data-i18n="q_base">Rapide</option>
+            <option value="small" selected data-i18n="q_small">Normale (recommandée)</option>
+            <option value="medium" data-i18n="q_medium">Précise (2 à 3 fois plus lent)</option>
           </select>
         </div>
 
         <div class="champ">
           <button id="btn-go" class="primary" type="button" disabled>Traduire</button>
-          <span class="hint">Environ 1 h 30 pour une prêche de 45 minutes. Tu peux fermer la page une fois l'envoi terminé.</span>
+          <span class="hint" data-i18n="aide_duree">Environ 1 h 30 pour une prêche de 45 minutes. Tu peux fermer la page une fois l'envoi terminé.</span>
         </div>
         <div id="upload-msg"></div>
       </div>
@@ -339,13 +351,13 @@
     <div class="colonne">
       <!-- Traductions en cours -->
       <section id="jobs-wrap" class="panel" hidden aria-labelledby="t-jobs">
-        <div class="panel-tete"><h2 id="t-jobs">En cours</h2><span id="jobs-count" class="compte"></span></div>
+        <div class="panel-tete"><h2 id="t-jobs" data-i18n="en_cours">En cours</h2><span id="jobs-count" class="compte"></span></div>
         <div id="jobs"></div>
       </section>
 
       <!-- Bibliothèque -->
       <section class="panel" aria-labelledby="t-lib">
-        <div class="panel-tete"><h2 id="t-lib">Prêches traduites</h2><span id="lib-count" class="compte"></span></div>
+        <div class="panel-tete"><h2 id="t-lib" data-i18n="traduites">Prêches traduites</h2><span id="lib-count" class="compte"></span></div>
         <div id="library"><div class="vide">Connecte-toi dans les réglages pour voir tes prêches.</div></div>
       </section>
     </div>
@@ -353,10 +365,105 @@
 </main>
 
 <script>
-const LANGS = {
-  zh: 'Chinois', es: 'Espagnol', ru: 'Russe', hi: 'Hindi',
-  en: 'Anglais', fr: 'Français', pt: 'Portugais', ar: 'Arabe',
+// ---------- Langue de la page (français / anglais) ----------
+const TEXTES = {
+  fr: {
+    sous_titre: 'Traduction des prêches', reglages: 'Réglages',
+    connecte: 'Connecté à GitHub', non_connecte: 'Non connecté', pb_connexion: 'Problème de connexion',
+    settings_titre: 'Connexion à GitHub',
+    settings_intro: "La traduction tourne gratuitement sur les serveurs de GitHub. Cette page a besoin d'une clé d'accès, à créer une seule fois :",
+    settings_etapes: '<li>Ouvre <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">github.com/settings/personal-access-tokens/new</a>.</li><li>Donne-lui un nom (ex. « Traduction ») et une expiration (ex. 1 an).</li><li><em>Repository access</em> → <em>Only select repositories</em> → <code>translation-</code>.</li><li><em>Repository permissions</em> : <strong>Actions</strong> et <strong>Contents</strong> en « Read and write ».</li><li>Clique sur <em>Generate token</em>, copie la clé et colle-la ci-dessous.</li>',
+    cle: "Clé d'accès GitHub", cle_locale: 'La clé reste uniquement dans ce navigateur, sur cet ordinateur.',
+    enregistrer: 'Enregistrer', verification: 'Vérification…', connecte_ok: 'Connecté ✓',
+    nouvelle: 'Nouvelle traduction', drop_titre: 'Dépose tes MP3 ici',
+    drop_sub: 'ou clique pour choisir des fichiers (MP3, M4A, WAV — 500 Mo max chacun)',
+    drop_n1: '1 prêche prête', drop_n: '{n} prêches prêtes', drop_plus: "clique ou dépose d'autres fichiers pour en ajouter",
+    mo: 'Mo', retirer: 'Retirer', langue_preche: 'Langue de la prêche', traduire_en: 'Traduire en',
+    qualite: 'Qualité de la transcription', q_base: 'Rapide', q_small: 'Normale (recommandée)', q_medium: 'Précise (2 à 3 fois plus lent)',
+    traduire: 'Traduire', traduire_n: 'Traduire les {n} prêches', envoi_en_cours: 'Envoi en cours…',
+    aide_duree: "Environ 1 h 30 pour une prêche de 45 minutes. Tu peux fermer la page une fois l'envoi terminé.",
+    ignores: 'Fichiers ignorés : {l}.', pas_audio: 'pas un fichier audio', trop_gros: '{mo} Mo, max {max} Mo',
+    attente_envoi: "En attente d'envoi…", envoi_fichier: 'Envoi du fichier… {p} %', enregistrement: 'Enregistrement…',
+    demarrage: 'Démarrage de la traduction…',
+    bilan_envoi: '{ok} prêche(s) sur {n} envoyée(s). Tu peux fermer la page : la traduction continue sur GitHub.',
+    en_cours: 'En cours', attente_serveur: "En attente d'un serveur GitHub…", file_attente: "En file d'attente chez GitHub…",
+    detail: 'Détail par langue', echec: 'échec', prep: 'Préparation du serveur', transcription: 'Transcription',
+    enreg_etape: 'Enregistrement', traduction: 'Traduction',
+    ligne_progres: '{etape} · {reste} restantes · fin vers {heure}',
+    echec_trad: 'La traduction a échoué (les langues réussies sont dans la bibliothèque).', voir_detail: 'Voir le détail',
+    d_moins2: 'moins de 2 min', d_min: 'environ {m} min', d_h: 'environ {h} h', d_hm: 'environ {h} h {m}',
+    traduites: 'Prêches traduites', lib_connecte: 'Connecte-toi dans les réglages pour voir tes prêches.',
+    lib_vide: 'Aucune prêche traduite pour le moment.<br>Dépose un MP3 pour commencer.',
+    sans_date: 'sans date', preche: 'Prêche', supprimee_le: 'Supprimée automatiquement le {d}', supprimer: 'Supprimer maintenant',
+    chargement: 'Chargement…', aucun_fichier: 'Aucun fichier.', texte_original: 'texte original',
+    ecouter: 'Écouter', fermer: 'Fermer', telecharger: 'Télécharger', texte: 'Texte',
+    tout_telecharger: 'Tout télécharger ({n} MP3)', telechargement: 'Téléchargement {i}/{n}…',
+    confirmer_suppr: 'Supprimer « {t} » et toutes ses traductions ?', suppression: 'Suppression…',
+    err401: "Clé d'accès invalide ou expirée. Vérifie-la dans les réglages.",
+    err403: "La clé n'a pas les bonnes permissions (Actions et Contents en « Read and write »).",
+    err404: 'Repo introuvable, ou la clé ne donne pas accès à ce repo.', err_net: 'Pas de connexion internet ?',
+    l_zh: 'Chinois', l_es: 'Espagnol', l_ru: 'Russe', l_hi: 'Hindi', l_en: 'Anglais', l_fr: 'Français', l_pt: 'Portugais', l_ar: 'Arabe',
+  },
+  en: {
+    sous_titre: 'Sermon translation', reglages: 'Settings',
+    connecte: 'Connected to GitHub', non_connecte: 'Not connected', pb_connexion: 'Connection problem',
+    settings_titre: 'GitHub connection',
+    settings_intro: 'Translation runs for free on GitHub servers. This page needs an access token, created once:',
+    settings_etapes: '<li>Open <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">github.com/settings/personal-access-tokens/new</a>.</li><li>Give it a name (e.g. “Translation”) and an expiration (e.g. 1 year).</li><li><em>Repository access</em> → <em>Only select repositories</em> → <code>translation-</code>.</li><li><em>Repository permissions</em>: <strong>Actions</strong> and <strong>Contents</strong> set to “Read and write”.</li><li>Click <em>Generate token</em>, copy it and paste it below.</li>',
+    cle: 'GitHub access token', cle_locale: 'The token stays only in this browser, on this computer.',
+    enregistrer: 'Save', verification: 'Checking…', connecte_ok: 'Connected ✓',
+    nouvelle: 'New translation', drop_titre: 'Drop your MP3 files here',
+    drop_sub: 'or click to choose files (MP3, M4A, WAV — 500 MB max each)',
+    drop_n1: '1 sermon ready', drop_n: '{n} sermons ready', drop_plus: 'click or drop more files to add them',
+    mo: 'MB', retirer: 'Remove', langue_preche: 'Sermon language', traduire_en: 'Translate into',
+    qualite: 'Transcription quality', q_base: 'Fast', q_small: 'Normal (recommended)', q_medium: 'Accurate (2 to 3 times slower)',
+    traduire: 'Translate', traduire_n: 'Translate {n} sermons', envoi_en_cours: 'Uploading…',
+    aide_duree: 'About 1 h 30 for a 45-minute sermon. You can close the page once the upload is done.',
+    ignores: 'Skipped files: {l}.', pas_audio: 'not an audio file', trop_gros: '{mo} MB, max {max} MB',
+    attente_envoi: 'Waiting to upload…', envoi_fichier: 'Uploading file… {p}%', enregistrement: 'Saving…',
+    demarrage: 'Starting translation…',
+    bilan_envoi: '{ok} of {n} sermon(s) uploaded. You can close the page: translation continues on GitHub.',
+    en_cours: 'In progress', attente_serveur: 'Waiting for a GitHub server…', file_attente: 'Queued at GitHub…',
+    detail: 'Details by language', echec: 'failed', prep: 'Server setup', transcription: 'Transcription',
+    enreg_etape: 'Saving', traduction: 'Translation',
+    ligne_progres: '{etape} · {reste} left · done around {heure}',
+    echec_trad: 'Translation failed (completed languages are in the library).', voir_detail: 'View details',
+    d_moins2: 'under 2 min', d_min: 'about {m} min', d_h: 'about {h} h', d_hm: 'about {h} h {m} min',
+    traduites: 'Translated sermons', lib_connecte: 'Connect in Settings to see your sermons.',
+    lib_vide: 'No translated sermons yet.<br>Drop an MP3 to get started.',
+    sans_date: 'no date', preche: 'Sermon', supprimee_le: 'Deleted automatically on {d}', supprimer: 'Delete now',
+    chargement: 'Loading…', aucun_fichier: 'No files.', texte_original: 'original text',
+    ecouter: 'Listen', fermer: 'Close', telecharger: 'Download', texte: 'Text',
+    tout_telecharger: 'Download all ({n} MP3)', telechargement: 'Downloading {i}/{n}…',
+    confirmer_suppr: 'Delete “{t}” and all its translations?', suppression: 'Deleting…',
+    err401: 'Invalid or expired access token. Check it in Settings.',
+    err403: 'The token is missing permissions (Actions and Contents set to “Read and write”).',
+    err404: 'Repo not found, or the token has no access to it.', err_net: 'No internet connection?',
+    l_zh: 'Chinese', l_es: 'Spanish', l_ru: 'Russian', l_hi: 'Hindi', l_en: 'English', l_fr: 'French', l_pt: 'Portuguese', l_ar: 'Arabic',
+  },
 };
+let UI = 'fr';
+try { UI = localStorage.getItem('preches-langue-page') === 'en' ? 'en' : 'fr'; } catch {}
+const LOCALE = UI === 'en' ? 'en-CA' : 'fr-FR';
+function t(cle, vars = {}) {
+  const txt = (TEXTES[UI] && TEXTES[UI][cle]) ?? TEXTES.fr[cle] ?? cle;
+  return txt.replace(/\{(\w+)\}/g, (_, k) => (k in vars ? vars[k] : `{${k}}`));
+}
+function appliquerTextes() {
+  document.documentElement.lang = UI;
+  document.querySelectorAll('[data-i18n]').forEach((el) => { el.textContent = t(el.dataset.i18n); });
+  document.querySelectorAll('[data-i18n-html]').forEach((el) => { el.innerHTML = t(el.dataset.i18nHtml); });
+  document.querySelectorAll('.choix-langue [data-ui]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.ui === UI)));
+}
+document.querySelectorAll('.choix-langue [data-ui]').forEach((b) => {
+  b.onclick = () => {
+    if (b.dataset.ui === UI) return;
+    try { localStorage.setItem('preches-langue-page', b.dataset.ui); } catch {}
+    location.reload();
+  };
+});
+
+const LANGS = Object.fromEntries(['zh', 'es', 'ru', 'hi', 'en', 'fr', 'pt', 'ar'].map((l) => [l, t('l_' + l)]));
 const NATIF = { zh: '中文', es: 'Español', ru: 'Русский', hi: 'हिन्दी', en: 'English', fr: 'Français', pt: 'Português', ar: 'العربية' };
 const CIBLES = ['zh', 'es', 'ru', 'hi', 'en', 'fr'];
 const PAR_DEFAUT = ['zh', 'es', 'ru', 'hi'];
@@ -399,10 +506,10 @@ const repo = (p) => `/repos/${cfg.repo}${p}`;
 const post = (p, body, method = 'POST') => gh(repo(p), { method, body: JSON.stringify(body) });
 
 function erreurLisible(e) {
-  if (e.status === 401) return "Clé d'accès invalide ou expirée. Vérifie-la dans les réglages.";
-  if (e.status === 403) return "La clé n'a pas les bonnes permissions (Actions et Contents en « Read and write »).";
-  if (e.status === 404) return 'Repo introuvable, ou la clé ne donne pas accès à ce repo.';
-  if (e.message === 'Failed to fetch') return 'Pas de connexion internet ?';
+  if (e.status === 401) return t('err401');
+  if (e.status === 403) return t('err403');
+  if (e.status === 404) return t('err404');
+  if (e.message === 'Failed to fetch') return t('err_net');
   return e.message;
 }
 
@@ -460,7 +567,7 @@ async function commit(entrees, message) {
 // ---------- Formulaire d'envoi ----------
 let fichiers = [];
 let envoiEnCours = false;
-const TEXTE_DROP = 'ou clique pour choisir des fichiers (MP3, M4A, WAV — 500 Mo max chacun)';
+const TEXTE_DROP = t('drop_sub');
 
 function dessinerCibles() {
   const source = document.querySelector('input[name=source]:checked').value;
@@ -477,35 +584,35 @@ function majBouton() {
   const n = document.querySelectorAll('#cibles input:checked').length;
   const btn = $('#btn-go');
   btn.disabled = envoiEnCours || !fichiers.length || !n;
-  btn.textContent = envoiEnCours ? 'Envoi en cours…'
-    : fichiers.length > 1 ? `Traduire les ${fichiers.length} prêches` : 'Traduire';
+  btn.textContent = envoiEnCours ? t('envoi_en_cours')
+    : fichiers.length > 1 ? t('traduire_n', { n: fichiers.length }) : t('traduire');
 }
 
 function dessinerFichiers() {
   const drop = $('#drop');
   drop.classList.toggle('has-file', fichiers.length > 0);
   if (!fichiers.length) {
-    $('#drop-title').textContent = 'Dépose tes MP3 ici';
+    $('#drop-title').textContent = t('drop_titre');
     $('#drop-sub').textContent = TEXTE_DROP;
   } else {
-    $('#drop-title').textContent = fichiers.length === 1 ? '1 prêche prête' : `${fichiers.length} prêches prêtes`;
-    $('#drop-sub').textContent = 'clique ou dépose d\'autres fichiers pour en ajouter';
+    $('#drop-title').textContent = fichiers.length === 1 ? t('drop_n1') : t('drop_n', { n: fichiers.length });
+    $('#drop-sub').textContent = t('drop_plus');
   }
   $('#liste').innerHTML = fichiers.map((f, i) => `
-    <li><span class="nom">${esc(f.name)}</span><span class="taille">${(f.size / 1048576).toFixed(1)} Mo</span>
-    <button class="link" data-retirer="${i}" title="Retirer" aria-label="Retirer ${esc(f.name)}">✕</button></li>`).join('');
+    <li><span class="nom">${esc(f.name)}</span><span class="taille">${(f.size / 1048576).toFixed(1)} ${t('mo')}</span>
+    <button class="link" data-retirer="${i}" title="${t('retirer')}" aria-label="${t('retirer')} ${esc(f.name)}">✕</button></li>`).join('');
   majBouton();
 }
 
 function ajouterFichiers(liste) {
   const refuses = [];
   for (const f of liste) {
-    if (!/^audio\//.test(f.type) && !/\.(mp3|m4a|wav|ogg|aac|flac|mp4)$/i.test(f.name)) { refuses.push(`${f.name} (pas un fichier audio)`); continue; }
-    if (f.size > MAX_MO * 1024 * 1024) { refuses.push(`${f.name} (${(f.size / 1048576).toFixed(0)} Mo, max ${MAX_MO} Mo)`); continue; }
+    if (!/^audio\//.test(f.type) && !/\.(mp3|m4a|wav|ogg|aac|flac|mp4)$/i.test(f.name)) { refuses.push(`${f.name} (${t('pas_audio')})`); continue; }
+    if (f.size > MAX_MO * 1024 * 1024) { refuses.push(`${f.name} (${t('trop_gros', { mo: (f.size / 1048576).toFixed(0), max: MAX_MO })})`); continue; }
     if (fichiers.some((x) => x.name === f.name && x.size === f.size)) continue; // déjà dans la liste
     fichiers.push(f);
   }
-  message('#upload-msg', 'err', refuses.length ? `Fichiers ignorés : ${refuses.join(', ')}.` : '');
+  message('#upload-msg', 'err', refuses.length ? t('ignores', { l: refuses.join(', ') }) : '');
   dessinerFichiers();
 }
 
@@ -533,7 +640,7 @@ function identifiant(nomFichier) {
 async function envoyerUne(f, id, reglages) {
   const ext = (f.name.match(/\.[a-zA-Z0-9]+$/) || ['.mp3'])[0].toLowerCase();
   const chemin = `entrees/${id}${ext}`;
-  const carte = ajouterJob(id, 'En attente d\'envoi…');
+  const carte = ajouterJob(id, t('attente_envoi'));
   return async () => {
     try {
       // GitHub refuse les gros envois d'un coup : on découpe en morceaux,
@@ -544,13 +651,16 @@ async function envoyerUne(f, id, reglages) {
         const b64 = await lireBase64(f.slice(i * MORCEAU, (i + 1) * MORCEAU));
         const blob = await envoyerBlob(b64, (p) => {
           const total = (i + p) / n;
-          carte.progression(total * 0.9, `Envoi du fichier… ${Math.round(total * 100)} %`);
+          carte.progression(total * 0.9, t('envoi_fichier', { p: Math.round(total * 100) }));
         });
         parties.push({ path: `${chemin}.part${String(i).padStart(3, '0')}`, sha: blob.sha });
       }
-      carte.progression(0.95, 'Enregistrement…');
+      carte.progression(0.95, t('enregistrement'));
+      // Nom d'origine, pour nommer les MP3 traduits au téléchargement.
+      const nom = await post('/git/blobs', { content: f.name, encoding: 'utf-8' });
+      parties.push({ path: `entrees/${id}.nom.txt`, sha: nom.sha });
       await commit(parties, `Nouvelle prêche : ${f.name}`);
-      carte.progression(1, 'Démarrage de la traduction…');
+      carte.progression(1, t('demarrage'));
       await post(`/actions/workflows/${WORKFLOW}/dispatches`, {
         ref: 'main',
         inputs: { fichier: chemin, ...reglages },
@@ -597,7 +707,7 @@ async function lancer() {
   majBouton();
   if (aEnvoyer.length > 1) {
     message('#upload-msg', ok === aEnvoyer.length ? 'ok' : 'err',
-      `${ok} prêche(s) sur ${aEnvoyer.length} envoyée(s). Tu peux fermer la page : la traduction continue sur GitHub.`);
+      t('bilan_envoi', { ok, n: aEnvoyer.length }));
   }
 }
 
@@ -625,7 +735,7 @@ function ajouterJob(id, texte) {
       <div class="bar"><div></div></div>
       <div class="job-pied">
         <span class="status"></span>
-        <button class="lien-details" type="button" aria-expanded="false" hidden>Détail par langue ${CHEVRON_BAS}</button>
+        <button class="lien-details" type="button" aria-expanded="false" hidden>${t('detail')} ${CHEVRON_BAS}</button>
       </div>
       <ol class="etapes" hidden></ol>`;
     $('#jobs').prepend(el);
@@ -640,15 +750,15 @@ function ajouterJob(id, texte) {
   const btn = el.querySelector('.lien-details'), liste = el.querySelector('.etapes');
   const carte = {
     el,
-    progression(p, t) { bar.classList.remove('indeterminate'); bar.firstElementChild.style.width = `${p * 100}%`; pct.textContent = `${Math.round(p * 100)} %`; st.className = 'status'; st.textContent = t; },
-    attente(t = 'En attente d\'un serveur GitHub…') { bar.classList.add('indeterminate'); pct.textContent = ''; st.className = 'status'; st.textContent = t; },
-    erreur(t, lien) { bar.classList.remove('indeterminate'); bar.firstElementChild.style.width = '0'; pct.textContent = ''; st.className = 'status err'; st.innerHTML = esc(t) + (lien ? ` <a href="${esc(lien)}" target="_blank" rel="noopener">Voir le détail</a>` : ''); },
+    progression(p, texte) { bar.classList.remove('indeterminate'); bar.firstElementChild.style.width = `${p * 100}%`; pct.textContent = `${Math.round(p * 100)} %`; st.className = 'status'; st.textContent = texte; },
+    attente(texte = t('attente_serveur')) { bar.classList.add('indeterminate'); pct.textContent = ''; st.className = 'status'; st.textContent = texte; },
+    erreur(texte, lien) { bar.classList.remove('indeterminate'); bar.firstElementChild.style.width = '0'; pct.textContent = ''; st.className = 'status err'; st.innerHTML = esc(texte) + (lien ? ` <a href="${esc(lien)}" target="_blank" rel="noopener">${t('voir_detail')}</a>` : ''); },
     // Détail par étape : [{ nom, sous, p, etat: 'fait' | 'encours' | 'attente' | 'echec' }]
     etapes(lignes) {
       btn.hidden = !lignes || !lignes.length;
       if (btn.hidden) { liste.hidden = true; return; }
       liste.innerHTML = lignes.map((e) => {
-        const val = e.etat === 'fait' ? '100 %' : e.etat === 'echec' ? 'échec' : `${Math.round(e.p * 100)} %`;
+        const val = e.etat === 'fait' ? '100 %' : e.etat === 'echec' ? t('echec') : `${Math.round(e.p * 100)} %`;
         return `<li class="etape ${e.etat}">
           <span class="puce" aria-hidden="true"></span>
           <span class="nom">${esc(e.nom)}${e.sous ? `<small>${esc(e.sous)}</small>` : ''}</span>
@@ -690,6 +800,7 @@ async function tailles() {
   taillesEntrees = {};
   try {
     for (const f of await gh(repo(`/contents/entrees?ref=${BRANCH}`))) {
+      if (f.name.endsWith('.nom.txt')) continue;
       const id = f.name.replace(/\.[a-z0-9]+(\.part\d+)?$/i, '');
       taillesEntrees[id] = (taillesEntrees[id] || 0) + f.size / 1048576;
     }
@@ -704,10 +815,10 @@ async function calibrer(runs) {
   if (minParMo) return;
   minParMo = { ...MIN_PAR_MO_DEFAUT };
   try {
-    const t = await tailles();
+    const parTaille = await tailles();
     const mesures = {};
     for (const run of runs.filter((r) => r.conclusion === 'success').slice(0, 5)) {
-      const mo = t[idDuRun(run)];
+      const mo = parTaille[idDuRun(run)];
       if (!mo) continue;
       const { jobs: js } = await gh(repo(`/actions/runs/${run.id}/jobs`));
       for (const e of (js[0] && js[0].steps) || []) {
@@ -736,20 +847,20 @@ function analyserEtapes(steps, mo, langues, source) {
   const maintenant = Date.now();
   const groupes = [];
   const prep = steps.filter((e) => ETAPES_PREPARATION.includes(e.name));
-  groupes.push({ nom: 'Préparation du serveur', steps: prep, attendu: PREPARATION_MIN });
+  groupes.push({ nom: t('prep'), steps: prep, attendu: PREPARATION_MIN });
   for (const e of steps) {
     if (!(e.name in MIN_PAR_MO_DEFAUT)) continue;
     const code = NOMS_LANGUES[e.name];
     if (code && langues && !langues.includes(code)) continue;
     if (e.conclusion === 'skipped') continue;
     groupes.push({
-      nom: e.name === 'Transcription' ? 'Transcription' : e.name,
+      nom: e.name === 'Transcription' ? t('transcription') : code ? LANGS[code] : e.name,
       sous: e.name === 'Transcription' ? (source || '') : code ? NATIF[code] : '',
       steps: [e], attendu: mo * minParMo[e.name],
     });
   }
   const enr = steps.filter((e) => e.name === 'Enregistrement des résultats');
-  if (enr.length) groupes.push({ nom: 'Enregistrement', steps: enr, attendu: ENREGISTREMENT_MIN });
+  if (enr.length) groupes.push({ nom: t('enreg_etape'), steps: enr, attendu: ENREGISTREMENT_MIN });
 
   let reste = 0, enCours = null;
   const lignes = groupes.map((g) => {
@@ -772,12 +883,14 @@ function analyserEtapes(steps, mo, langues, source) {
 }
 
 function duree(min) {
-  if (min < 1.5) return 'moins de 2 min';
-  if (min < 60) return `environ ${Math.round(min)} min`;
+  if (min < 1.5) return t('d_moins2');
+  if (min < 60) return t('d_min', { m: Math.round(min) });
   const h = Math.floor(min / 60), m = Math.round((min % 60) / 5) * 5;
-  return m ? `environ ${h} h ${String(m).padStart(2, '0')}` : `environ ${h} h`;
+  return m ? t('d_hm', { h, m: String(m).padStart(2, '0') }) : t('d_h', { h });
 }
-const heure = (d) => d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }).replace(':', ' h ');
+const heure = (d) => UI === 'en'
+  ? d.toLocaleTimeString('en-CA', { hour: 'numeric', minute: '2-digit' })
+  : d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }).replace(':', ' h ');
 
 let suiviTimer = null;
 async function suivreTravaux() {
@@ -798,7 +911,7 @@ async function suivreTravaux() {
         actifs++;
         const carte = jobs.get(id) || ajouterJob(id, '');
         if (run.status === 'queued' || run.status === 'pending' || run.status === 'waiting') {
-          carte.attente(run.status === 'queued' ? 'En file d\'attente chez GitHub…' : undefined);
+          carte.attente(run.status === 'queued' ? t('file_attente') : undefined);
           continue;
         }
         const { jobs: js } = await gh(repo(`/actions/runs/${run.id}/jobs`));
@@ -808,15 +921,15 @@ async function suivreTravaux() {
         const debut = new Date(job.started_at || run.run_started_at || run.created_at);
         const ecoule = (Date.now() - debut) / 60000;
         const p = Math.min(0.97, Math.max(0.01, ecoule / (ecoule + reste)));
-        const etape = enCours ? (enCours.sous ? `${enCours.nom} (${enCours.sous})` : enCours.nom) : 'Traduction';
-        carte.progression(p, `${etape} · ${duree(reste)} restantes · fin vers ${heure(new Date(Date.now() + reste * 60000))}`);
+        const etape = enCours ? (enCours.sous ? `${enCours.nom} (${enCours.sous})` : enCours.nom) : t('traduction');
+        carte.progression(p, t('ligne_progres', { etape, reste: duree(reste), heure: heure(new Date(Date.now() + reste * 60000)) }));
         carte.etapes(lignes);
       } else if (jobs.has(id) || new Date(run.updated_at) > depuis) {
         if (run.conclusion === 'success') {
           if (jobs.has(id)) { retirerJob(id); chargerBibliotheque(); }
         } else if (run.conclusion !== 'cancelled' && new Date(run.updated_at) > depuis) {
           const carte = jobs.get(id) || ajouterJob(id, '');
-          carte.erreur('La traduction a échoué (les langues réussies sont dans la bibliothèque).', run.html_url);
+          carte.erreur(t('echec_trad'), run.html_url);
           carte.etapes(null);
         }
       }
@@ -859,12 +972,12 @@ function analyser(id) {
   let texte = (m ? m[6] : id).replace(/-{2,}/g, ' – ').replace(/[-_]+/g, ' ').replace(/\s+/g, ' ').trim();
   const d = trouverDate(texte);
   if (d) texte = texte.replace(d.texte, ' ');
-  texte = texte.replace(/^[\s–,.]+|[\s–,]+$/g, '').replace(/\s+/g, ' ').trim() || 'Prêche';
+  texte = texte.replace(/^[\s–,.]+|[\s–,]+$/g, '').replace(/\s+/g, ' ').trim() || t('preche');
   return { titre: texte, date: d && d.date, envoi };
 }
 const titre = (id) => analyser(id).titre;
-const dateLongue = (d) => d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
-const dateCourte = (d) => d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' });
+const dateLongue = (d) => d.toLocaleDateString(LOCALE, { day: 'numeric', month: 'long', year: 'numeric' });
+const dateCourte = (d) => d.toLocaleDateString(LOCALE, { day: 'numeric', month: 'short', year: 'numeric' });
 
 function etatConnexion(ok, texte) {
   const el = $('#connexion');
@@ -874,39 +987,40 @@ function etatConnexion(ok, texte) {
 
 async function chargerBibliotheque() {
   const lib = $('#library');
-  if (!cfg.token) { etatConnexion(null, 'Non connecté'); lib.innerHTML = '<div class="vide">Connecte-toi dans les réglages pour voir tes prêches.</div>'; $('#lib-count').textContent = ''; return; }
+  if (!cfg.token) { etatConnexion(null, t('non_connecte')); lib.innerHTML = `<div class="vide">${t('lib_connecte')}</div>`; $('#lib-count').textContent = ''; return; }
   let dossiers;
   try {
     dossiers = (await gh(repo(`/contents/resultats?ref=${BRANCH}`))).filter((d) => d.type === 'dir');
-    etatConnexion(true, 'Connecté à GitHub');
+    etatConnexion(true, t('connecte'));
   } catch (e) {
-    etatConnexion(e.status === 404 ? true : false, e.status === 404 ? 'Connecté à GitHub' : 'Problème de connexion');
-    if (e.status === 404) { lib.innerHTML = '<div class="vide">Aucune prêche traduite pour le moment.<br>Dépose un MP3 pour commencer.</div>'; return; }
+    etatConnexion(e.status === 404, e.status === 404 ? t('connecte') : t('pb_connexion'));
+    if (e.status === 404) { lib.innerHTML = `<div class="vide">${t('lib_vide')}</div>`; return; }
     lib.innerHTML = `<div class="panel-corps"><div class="notice err">${esc(erreurLisible(e))}</div></div>`; return;
   }
-  if (!dossiers.length) { lib.innerHTML = '<div class="vide">Aucune prêche traduite pour le moment.<br>Dépose un MP3 pour commencer.</div>'; return; }
+  if (!dossiers.length) { lib.innerHTML = `<div class="vide">${t('lib_vide')}</div>`; return; }
   $('#lib-count').textContent = String(dossiers.length);
 
   // Tri par date de la prêche (lue dans le titre), la plus récente en haut.
   // Les prêches sans date dans le titre vont à la fin, par date d'envoi.
   const preches = dossiers.map((d) => ({ ...analyser(d.name), id: d.name, path: d.path }));
-  const t = (d) => (d ? d.getTime() : 0);
-  preches.sort((a, b) => (!!b.date - !!a.date) || t(b.date) - t(a.date) || t(b.envoi) - t(a.envoi));
+  const ms = (d) => (d ? d.getTime() : 0);
+  preches.sort((a, b) => (!!b.date - !!a.date) || ms(b.date) - ms(a.date) || ms(b.envoi) - ms(a.envoi));
 
   lib.innerHTML = `<div class="liste-preches">${preches.map((p) => {
     // Le nettoyage quotidien retire les prêches envoyées il y a plus de 30 jours (donc au 31e jour).
     const expire = p.envoi && new Date(p.envoi.getFullYear(), p.envoi.getMonth(), p.envoi.getDate() + CONSERVATION_JOURS + 1);
     return `<details class="preche" data-path="${esc(p.path)}" data-id="${esc(p.id)}">
       <summary>
-        <span class="preche-date">${p.date ? esc(dateCourte(p.date)) : 'sans date'}</span>
+        <span class="preche-date">${p.date ? esc(dateCourte(p.date)) : t('sans_date')}</span>
         <span class="preche-titre">${esc(p.titre)}</span>
         <svg class="chevron" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>
       </summary>
       <div class="preche-corps">
-        <div class="langues"><span class="hint">Chargement…</span></div>
+        <div class="langues"><span class="hint">${t('chargement')}</span></div>
         <div class="preche-pied hint">
-          ${expire ? `Supprimée automatiquement le ${esc(dateLongue(expire))}` : ''}
-          · <button class="link" data-del="${esc(p.id)}">Supprimer maintenant</button>
+          <span class="tout"></span>
+          ${expire ? esc(t('supprimee_le', { d: dateLongue(expire) })) : ''}
+          · <button class="link" data-del="${esc(p.id)}">${t('supprimer')}</button>
         </div>
       </div>
     </details>`;
@@ -932,14 +1046,19 @@ async function chargerLangues(details) {
         const nom = LANGS[l] || l.toUpperCase();
         return `<div class="lang">
           <span class="code">${l}</span>
-          <span class="lang-nom">${esc(nom)}${NATIF[l] && NATIF[l] !== nom ? `<small>${NATIF[l]}</small>` : ''}${mp3 ? '' : ' <small>texte original</small>'}</span>
+          <span class="lang-nom">${esc(nom)}${NATIF[l] && NATIF[l] !== nom ? `<small>${NATIF[l]}</small>` : ''}${mp3 ? '' : ` <small>${t('texte_original')}</small>`}</span>
           <span class="lang-btns">
-            ${mp3 ? `<button class="small" data-play="${esc(mp3.path)}">Écouter</button>
-                     <button class="small" data-dl="${esc(mp3.path)}" data-name="${esc(mp3.name)}">Télécharger</button>` : ''}
-            ${txt ? `<button class="small" data-txt="${esc(txt.path)}">Texte</button>` : ''}
+            ${mp3 ? `<button class="small" data-play="${esc(mp3.path)}">${t('ecouter')}</button>
+                     <button class="small" data-dl="${esc(mp3.path)}" data-lang="${l}">${t('telecharger')}</button>` : ''}
+            ${txt ? `<button class="small" data-txt="${esc(txt.path)}">${t('texte')}</button>` : ''}
           </span>
         </div>`;
-      }).join('') || '<span class="hint">Aucun fichier.</span>';
+      }).join('') || `<span class="hint">${t('aucun_fichier')}</span>`;
+    const mp3s = CIBLES.filter((l) => par[l] && par[l].mp3);
+    if (mp3s.length > 1) {
+      details.querySelector('.tout').innerHTML =
+        `<button class="small" data-dl-tout="${esc(details.dataset.id)}" data-langs="${mp3s.join(' ')}">${t('tout_telecharger', { n: mp3s.length })}</button>`;
+    }
   } catch (e) {
     delete details.dataset.charge;
     zone.innerHTML = `<span class="status err">${esc(erreurLisible(e))}</span>`;
@@ -950,6 +1069,33 @@ $('#library').addEventListener('toggle', (e) => {
 }, true);
 
 const cacheAudio = new Map();
+const nomsOrigine = new Map();
+
+// Nom du fichier envoyé au départ (enregistré à côté du MP3), sinon reconstruit depuis l'identifiant.
+async function nomOrigine(id) {
+  if (!nomsOrigine.has(id)) {
+    let nom = null;
+    try {
+      const blob = await gh(repo(`/contents/entrees/${encodeURIComponent(id)}.nom.txt?ref=${BRANCH}`), { headers: { Accept: 'application/vnd.github.raw' } });
+      nom = (await blob.text()).trim().replace(/\.[a-z0-9]{2,4}$/i, '');
+    } catch {}
+    if (!nom) {
+      const m = id.match(/^\d{4}-\d{2}-\d{2}_\d{4}_(.*)$/);
+      nom = (m ? m[1] : id).split('---').map((x) => x.replace(/-/g, ' ').trim()).join(' - ').replace(/\s+/g, ' ');
+    }
+    nomsOrigine.set(id, nom.replace(/[\\/:*?"<>|]+/g, ' ').trim());
+  }
+  return nomsOrigine.get(id);
+}
+
+async function enregistrerMp3(id, lang, path) {
+  const blob = await telecharger(path);
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([blob], { type: 'audio/mpeg' }));
+  a.download = `(${LANGS[lang] || lang}) ${await nomOrigine(id)}.mp3`;
+  document.body.append(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 60000);
+}
 async function telecharger(path) {
   if (!cacheAudio.has(path)) {
     const blob = await gh(repo(`/contents/${encodeURI(path)}?ref=${BRANCH}`), { headers: { Accept: 'application/vnd.github.raw' } });
@@ -966,27 +1112,33 @@ $('#library').addEventListener('click', async (ev) => {
   try {
     if (b.dataset.play) {
       const existant = ligne.querySelector('audio');
-      if (existant) { existant.remove(); b.textContent = 'Écouter'; return; }
-      b.textContent = 'Chargement…'; b.disabled = true;
+      if (existant) { existant.remove(); b.textContent = t('ecouter'); return; }
+      b.textContent = t('chargement'); b.disabled = true;
       const blob = await telecharger(b.dataset.play);
       const audio = document.createElement('audio');
       audio.controls = true;
       audio.src = URL.createObjectURL(new Blob([blob], { type: 'audio/mpeg' }));
       ligne.append(audio);
       audio.play().catch(() => {});
-      b.textContent = 'Fermer'; b.disabled = false;
+      b.textContent = t('fermer'); b.disabled = false;
     } else if (b.dataset.dl) {
-      b.textContent = 'Chargement…'; b.disabled = true;
-      const blob = await telecharger(b.dataset.dl);
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(new Blob([blob], { type: 'audio/mpeg' }));
-      a.download = b.dataset.name;
-      document.body.append(a); a.click(); a.remove();
+      b.textContent = t('chargement'); b.disabled = true;
+      await enregistrerMp3(b.closest('details').dataset.id, b.dataset.lang, b.dataset.dl);
+      b.textContent = ancien; b.disabled = false;
+    } else if (b.dataset.dlTout) {
+      // Un téléchargement par langue (le navigateur peut demander l'autorisation la première fois).
+      const id = b.dataset.dlTout, langs = b.dataset.langs.split(' ');
+      b.disabled = true;
+      for (const [i, l] of langs.entries()) {
+        b.textContent = t('telechargement', { i: i + 1, n: langs.length });
+        await enregistrerMp3(id, l, `resultats/${id}/${id}.${l}.mp3`);
+        await new Promise((r) => setTimeout(r, 800));
+      }
       b.textContent = ancien; b.disabled = false;
     } else if (b.dataset.txt) {
       const existant = ligne.querySelector('pre');
       if (existant) { existant.remove(); return; }
-      b.textContent = 'Chargement…'; b.disabled = true;
+      b.textContent = t('chargement'); b.disabled = true;
       const blob = await gh(repo(`/contents/${encodeURI(b.dataset.txt)}?ref=${BRANCH}`), { headers: { Accept: 'application/vnd.github.raw' } });
       const pre = document.createElement('pre');
       pre.textContent = await blob.text();
@@ -994,9 +1146,9 @@ $('#library').addEventListener('click', async (ev) => {
       b.textContent = ancien; b.disabled = false;
     } else if (b.dataset.del) {
       const id = b.dataset.del;
-      if (!confirm(`Supprimer « ${titre(id)} » et toutes ses traductions ?`)) return;
+      if (!confirm(t('confirmer_suppr', { t: titre(id) }))) return;
       b.disabled = true;
-      b.textContent = 'Suppression…';
+      b.textContent = t('suppression');
       const res = await gh(repo(`/contents/resultats/${encodeURIComponent(id)}?ref=${BRANCH}`));
       let entrees = [];
       try { entrees = (await gh(repo(`/contents/entrees?ref=${BRANCH}`))).filter((f) => f.name.startsWith(id + '.')); } catch {}
@@ -1021,12 +1173,12 @@ $('#btn-save').onclick = async () => {
   cfg.token = $('#token').value.trim();
   cfg.repo = $('#repo').value.trim().replace(/^https:\/\/github\.com\//, '').replace(/\/$/, '');
   const msg = $('#settings-msg');
-  msg.className = 'status'; msg.textContent = 'Vérification…';
+  msg.className = 'status'; msg.textContent = t('verification');
   try {
     await gh(repo(''));
     await gh(repo(`/actions/workflows/${WORKFLOW}`));
     saveCfg();
-    msg.className = 'status ok'; msg.textContent = 'Connecté ✓';
+    msg.className = 'status ok'; msg.textContent = t('connecte_ok');
     setTimeout(() => { $('#settings').hidden = true; msg.textContent = ''; }, 900);
     chargerBibliotheque();
     suivreTravaux();
@@ -1052,6 +1204,7 @@ $('#cibles').addEventListener('change', majBouton);
 $('#btn-go').onclick = lancer;
 
 // ---------- Démarrage ----------
+appliquerTextes();
 dessinerCibles();
 if (cfg.token) { chargerBibliotheque(); suivreTravaux(); } else { ouvrirReglages(); }
 </script>
