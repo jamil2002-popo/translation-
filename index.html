@@ -108,7 +108,10 @@
   .job { margin-top: 12px; }
   .job-head { display: flex; justify-content: space-between; gap: 12px; align-items: baseline; flex-wrap: wrap; }
   .job-title { font-weight: 600; word-break: break-word; }
-  .bar { height: 6px; background: var(--line); border-radius: 99px; overflow: hidden; margin: 12px 0 8px; }
+  .bar-ligne { display: flex; align-items: center; gap: 12px; margin: 12px 0 8px; }
+  .bar { flex: 1; height: 6px; background: var(--line); border-radius: 99px; overflow: hidden; }
+  .pct { font-size: 14px; font-weight: 600; color: var(--accent); font-variant-numeric: tabular-nums; min-width: 3.2em; text-align: right; }
+  .pct:empty { display: none; }
   .bar > div { height: 100%; background: var(--accent); width: 0; transition: width .4s; }
   .bar.indeterminate > div { width: 30%; animation: slide 1.4s ease-in-out infinite; }
   @keyframes slide { from { transform: translateX(-100%); } to { transform: translateX(340%); } }
@@ -500,16 +503,16 @@ function ajouterJob(id, texte) {
     el.id = 'job-' + id;
     el.innerHTML = `
       <div class="job-head"><span class="job-title">${esc(titre(id))}</span><span class="hint temps"></span></div>
-      <div class="bar"><div></div></div>
+      <div class="bar-ligne"><div class="bar"><div></div></div><span class="pct"></span></div>
       <div class="status"></div>`;
     $('#jobs').prepend(el);
   }
-  const bar = el.querySelector('.bar'), st = el.querySelector('.status');
+  const bar = el.querySelector('.bar'), st = el.querySelector('.status'), pct = el.querySelector('.pct');
   const carte = {
     el,
-    progression(p, t) { bar.classList.remove('indeterminate'); bar.firstElementChild.style.width = `${p * 100}%`; st.className = 'status'; st.textContent = t; },
-    attente(t = 'En attente d\'un serveur GitHub…') { bar.classList.add('indeterminate'); st.className = 'status'; st.textContent = t; },
-    erreur(t, lien) { bar.classList.remove('indeterminate'); bar.firstElementChild.style.width = '0'; st.className = 'status err'; st.innerHTML = esc(t) + (lien ? ` <a href="${esc(lien)}" target="_blank" rel="noopener">Voir le détail</a>` : ''); },
+    progression(p, t) { bar.classList.remove('indeterminate'); bar.firstElementChild.style.width = `${p * 100}%`; pct.textContent = `${Math.round(p * 100)} %`; st.className = 'status'; st.textContent = t; },
+    attente(t = 'En attente d\'un serveur GitHub…') { bar.classList.add('indeterminate'); pct.textContent = ''; st.className = 'status'; st.textContent = t; },
+    erreur(t, lien) { bar.classList.remove('indeterminate'); bar.firstElementChild.style.width = '0'; pct.textContent = ''; st.className = 'status err'; st.innerHTML = esc(t) + (lien ? ` <a href="${esc(lien)}" target="_blank" rel="noopener">Voir le détail</a>` : ''); },
     temps(t) { el.querySelector('.temps').textContent = t; },
   };
   carte.progression(0, texte);
