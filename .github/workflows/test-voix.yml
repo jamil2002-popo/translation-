@@ -14,6 +14,7 @@ jobs:
       - run: pip install edge-tts
       - shell: python
         run: |
+          import sys; sys.path.insert(0, ".")
           import asyncio, glob, time, edge_tts, traduire_preche as t
           txt = open(glob.glob("preches/resultats/*Better-Late*/*.ru.txt")[0], encoding="utf-8").read()
           async def un(m, v="ru-RU-DmitryNeural"):
