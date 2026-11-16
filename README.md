@@ -26,7 +26,7 @@ Tu déposes ton MP3 dans une page web. GitHub fait tout le travail gratuitement 
 2. Double-clique dessus : la page s'ouvre dans ton navigateur.
 3. Elle demande une **clé d'accès GitHub** et explique comment la créer (2 minutes).
 
-**À chaque prêche :** glisse le MP3 dans la page et clique sur **Traduire**. Compte 15 à 30 minutes pour 45 minutes de prêche. Tu peux fermer la page et revenir plus tard.
+**À chaque prêche :** glisse un ou plusieurs MP3 dans la page et clique sur **Traduire**. Les fichiers sont envoyés un par un, puis traduits en parallèle sur GitHub. Compte 15 à 30 minutes pour 45 minutes de prêche. Tu peux fermer la page et revenir plus tard.
 
 Les fichiers sont rangés sur la branche `preches` du repo (`entrees/` pour les MP3 reçus, `resultats/` pour les traductions). Le plan gratuit de GitHub donne 2000 minutes de calcul par mois sur un repo privé, soit environ 60 à 100 prêches.
 

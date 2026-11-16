@@ -22,9 +22,10 @@ run-name: "Traduction ${{ inputs.fichier }}"
 permissions:
   contents: write
 
-# Une traduction à la fois : évite les conflits d'écriture sur la branche preches.
+# Plusieurs prêches peuvent tourner en même temps (chacune dans son dossier).
+# On empêche seulement de traduire deux fois la même prêche en parallèle.
 concurrency:
-  group: preches
+  group: preches-${{ inputs.fichier }}
   cancel-in-progress: false
 
 jobs:
@@ -98,8 +99,11 @@ jobs:
           git add -f resultats 2>/dev/null || true  # -f : le .gitignore ignore les *.mp3
           if git diff --cached --quiet; then echo "Rien à enregistrer"; exit 0; fi
           git commit -m "Résultats : $FICHIER"
-          for i in 1 2 3 4; do
+          # Une autre prêche a pu finir en même temps : on se remet à jour et on réessaie.
+          for i in 1 2 3 4 5 6; do
             git push origin HEAD:preches && exit 0
-            sleep $((i * 5)); git pull --rebase origin preches
+            sleep $((i * 5 + RANDOM % 10))
+            git fetch --depth=50 origin preches
+            git rebase origin/preches || git rebase --abort  # chaque prêche a son dossier : pas de conflit attendu
           done
           exit 1

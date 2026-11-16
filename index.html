@@ -85,6 +85,12 @@
   .drop strong { display: block; font-size: 18px; margin-bottom: 4px; }
   .drop.has-file { border-style: solid; border-color: var(--accent); background: var(--accent-soft); }
 
+  .liste { list-style: none; margin: 12px 0 0; padding: 0; }
+  .liste:empty { display: none; }
+  .liste li { display: grid; grid-template-columns: 1fr auto auto; gap: 12px; align-items: center; padding: 8px 4px; border-bottom: 1px solid var(--line); }
+  .liste .nom { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+  .liste button.link { text-decoration: none; font-size: 16px; padding: 2px 6px; }
+  .liste button.link:hover { color: var(--err); }
   .options { display: grid; grid-template-columns: 1fr 1fr; gap: 0 16px; }
   @media (max-width: 560px) { .options { grid-template-columns: 1fr; } }
   .chips { display: flex; flex-wrap: wrap; gap: 8px; }
@@ -131,7 +137,7 @@
   <header>
     <div>
       <h1>Traduction de prêches</h1>
-      <p class="sub">Dépose une prêche en MP3 et récupère-la lue en chinois, espagnol, russe et hindi.</p>
+      <p class="sub">Dépose une ou plusieurs prêches en MP3 et récupère-les lues en chinois, espagnol, russe et hindi.</p>
     </div>
     <button id="btn-settings" class="small" title="Réglages">Réglages</button>
   </header>
@@ -160,14 +166,15 @@
 
   <!-- Envoi -->
   <section id="upload" class="card" style="margin-top:16px">
-    <div id="drop" class="drop" tabindex="0" role="button" aria-label="Choisir un fichier audio">
+    <div id="drop" class="drop" tabindex="0" role="button" aria-label="Choisir des fichiers audio">
       <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
         <path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>
       </svg>
-      <strong id="drop-title">Dépose ton MP3 ici</strong>
-      <span id="drop-sub" class="hint">ou clique pour choisir un fichier (MP3, M4A, WAV — 500 Mo max)</span>
-      <input id="file" type="file" accept="audio/*,.mp3,.m4a,.wav,.ogg" hidden>
+      <strong id="drop-title">Dépose tes MP3 ici</strong>
+      <span id="drop-sub" class="hint">ou clique pour choisir des fichiers (MP3, M4A, WAV — 500 Mo max chacun)</span>
+      <input id="file" type="file" accept="audio/*,.mp3,.m4a,.wav,.ogg" multiple hidden>
     </div>
+    <ul id="liste" class="liste"></ul>
 
     <div class="options">
       <div>
@@ -312,7 +319,9 @@ async function commit(entrees, message) {
 }
 
 // ---------- Formulaire d'envoi ----------
-let fichier = null;
+let fichiers = [];
+let envoiEnCours = false;
+const TEXTE_DROP = 'ou clique pour choisir des fichiers (MP3, M4A, WAV — 500 Mo max chacun)';
 
 function dessinerCibles() {
   const source = document.querySelector('input[name=source]:checked').value;
@@ -327,21 +336,38 @@ function dessinerCibles() {
 
 function majBouton() {
   const n = document.querySelectorAll('#cibles input:checked').length;
-  $('#btn-go').disabled = !fichier || !n;
+  const btn = $('#btn-go');
+  btn.disabled = envoiEnCours || !fichiers.length || !n;
+  btn.textContent = envoiEnCours ? 'Envoi en cours…'
+    : fichiers.length > 1 ? `Traduire les ${fichiers.length} prêches` : 'Traduire';
 }
 
-function choisirFichier(f) {
-  if (!f) return;
-  if (f.size > MAX_MO * 1024 * 1024) {
-    message('#upload-msg', 'err', `Le fichier fait ${(f.size / 1048576).toFixed(0)} Mo : la limite est de ${MAX_MO} Mo. Réduis la qualité du MP3 (ex. 64 kbit/s) et réessaie.`);
-    return;
+function dessinerFichiers() {
+  const drop = $('#drop');
+  drop.classList.toggle('has-file', fichiers.length > 0);
+  if (!fichiers.length) {
+    $('#drop-title').textContent = 'Dépose tes MP3 ici';
+    $('#drop-sub').textContent = TEXTE_DROP;
+  } else {
+    $('#drop-title').textContent = fichiers.length === 1 ? '1 prêche prête' : `${fichiers.length} prêches prêtes`;
+    $('#drop-sub').textContent = 'clique ou dépose d\'autres fichiers pour en ajouter';
   }
-  fichier = f;
-  $('#drop').classList.add('has-file');
-  $('#drop-title').textContent = f.name;
-  $('#drop-sub').textContent = `${(f.size / 1048576).toFixed(1)} Mo — clique pour changer`;
-  $('#upload-msg').innerHTML = '';
+  $('#liste').innerHTML = fichiers.map((f, i) => `
+    <li><span class="nom">${esc(f.name)}</span><span class="hint">${(f.size / 1048576).toFixed(1)} Mo</span>
+    <button class="link" data-retirer="${i}" title="Retirer" aria-label="Retirer ${esc(f.name)}">✕</button></li>`).join('');
   majBouton();
+}
+
+function ajouterFichiers(liste) {
+  const refuses = [];
+  for (const f of liste) {
+    if (!/^audio\//.test(f.type) && !/\.(mp3|m4a|wav|ogg|aac|flac|mp4)$/i.test(f.name)) { refuses.push(`${f.name} (pas un fichier audio)`); continue; }
+    if (f.size > MAX_MO * 1024 * 1024) { refuses.push(`${f.name} (${(f.size / 1048576).toFixed(0)} Mo, max ${MAX_MO} Mo)`); continue; }
+    if (fichiers.some((x) => x.name === f.name && x.size === f.size)) continue; // déjà dans la liste
+    fichiers.push(f);
+  }
+  message('#upload-msg', 'err', refuses.length ? `Fichiers ignorés : ${refuses.join(', ')}.` : '');
+  dessinerFichiers();
 }
 
 function message(sel, type, texte) {
@@ -365,50 +391,79 @@ function identifiant(nomFichier) {
   return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}_${p(d.getHours())}${p(d.getMinutes())}_${base}`;
 }
 
+async function envoyerUne(f, id, reglages) {
+  const ext = (f.name.match(/\.[a-zA-Z0-9]+$/) || ['.mp3'])[0].toLowerCase();
+  const chemin = `entrees/${id}${ext}`;
+  const carte = ajouterJob(id, 'En attente d\'envoi…');
+  return async () => {
+    try {
+      // GitHub refuse les gros envois d'un coup : on découpe en morceaux,
+      // que le workflow recolle avant la traduction.
+      const n = Math.ceil(f.size / MORCEAU) || 1;
+      const parties = [];
+      for (let i = 0; i < n; i++) {
+        const b64 = await lireBase64(f.slice(i * MORCEAU, (i + 1) * MORCEAU));
+        const blob = await envoyerBlob(b64, (p) => {
+          const total = (i + p) / n;
+          carte.progression(total * 0.9, `Envoi du fichier… ${Math.round(total * 100)} %`);
+        });
+        parties.push({ path: `${chemin}.part${String(i).padStart(3, '0')}`, sha: blob.sha });
+      }
+      carte.progression(0.95, 'Enregistrement…');
+      await commit(parties, `Nouvelle prêche : ${f.name}`);
+      carte.progression(1, 'Démarrage de la traduction…');
+      await post(`/actions/workflows/${WORKFLOW}/dispatches`, {
+        ref: 'main',
+        inputs: { fichier: chemin, ...reglages },
+      });
+      carte.attente();
+      return true;
+    } catch (e) {
+      carte.erreur(erreurLisible(e));
+      return false;
+    }
+  };
+}
+
 async function lancer() {
   if (!cfg.token) { ouvrirReglages(); return; }
-  const btn = $('#btn-go');
-  btn.disabled = true;
-  const id = identifiant(fichier.name);
-  const ext = (fichier.name.match(/\.[a-zA-Z0-9]+$/) || ['.mp3'])[0].toLowerCase();
-  const chemin = `entrees/${id}${ext}`;
-  const langues = [...document.querySelectorAll('#cibles input:checked')].map((i) => i.value);
-  const source = document.querySelector('input[name=source]:checked').value;
-  const modele = $('#modele').value;
+  const reglages = {
+    langues: [...document.querySelectorAll('#cibles input:checked')].map((i) => i.value).join(' '),
+    source: document.querySelector('input[name=source]:checked').value,
+    modele: $('#modele').value,
+  };
+  const aEnvoyer = fichiers;
+  fichiers = [];
+  $('#file').value = '';
+  envoiEnCours = true;
+  dessinerFichiers();
 
-  const carte = ajouterJob(id, 'Envoi du fichier…');
-  try {
-    // GitHub refuse les gros envois d'un coup : on découpe en morceaux,
-    // que le workflow recolle avant la traduction.
-    const n = Math.ceil(fichier.size / MORCEAU) || 1;
-    const parties = [];
-    for (let i = 0; i < n; i++) {
-      const b64 = await lireBase64(fichier.slice(i * MORCEAU, (i + 1) * MORCEAU));
-      const blob = await envoyerBlob(b64, (p) => {
-        const total = (i + p) / n;
-        carte.progression(total * 0.9, `Envoi du fichier… ${Math.round(total * 100)} %`);
-      });
-      parties.push({ path: `${chemin}.part${String(i).padStart(3, '0')}`, sha: blob.sha });
-    }
-    carte.progression(0.95, 'Enregistrement…');
-    await commit(parties, `Nouvelle prêche : ${fichier.name}`);
-    carte.progression(1, 'Démarrage de la traduction…');
-    await post(`/actions/workflows/${WORKFLOW}/dispatches`, {
-      ref: 'main',
-      inputs: { fichier: chemin, langues: langues.join(' '), source, modele },
-    });
-    carte.attente();
-    // Réinitialise le formulaire
-    fichier = null; $('#file').value = '';
-    $('#drop').classList.remove('has-file');
-    $('#drop-title').textContent = 'Dépose ton MP3 ici';
-    $('#drop-sub').textContent = 'ou clique pour choisir un fichier (MP3, M4A, WAV — 500 Mo max)';
-    setTimeout(suivreTravaux, 4000);
-  } catch (e) {
-    carte.erreur(erreurLisible(e));
+  // Identifiants uniques, même pour deux fichiers du même nom envoyés la même minute.
+  const pris = new Set();
+  const ids = aEnvoyer.map((f) => {
+    let id = identifiant(f.name), n = 2;
+    while (pris.has(id)) id = `${identifiant(f.name)}-${n++}`;
+    pris.add(id);
+    return id;
+  });
+  // Cartes créées à l'envers (chacune s'ajoute en haut) : la 1re envoyée reste en haut.
+  const taches = [];
+  for (let i = aEnvoyer.length - 1; i >= 0; i--) taches.unshift(await envoyerUne(aEnvoyer[i], ids[i], reglages));
+  // Envoi un par un : plus fiable sur une connexion lente.
+  let ok = 0;
+  for (const t of taches) {
+    if (await t()) { ok++; setTimeout(suivreTravaux, 4000); }
   }
+  envoiEnCours = false;
   majBouton();
+  if (aEnvoyer.length > 1) {
+    message('#upload-msg', ok === aEnvoyer.length ? 'ok' : 'err',
+      `${ok} prêche(s) sur ${aEnvoyer.length} envoyée(s). Tu peux fermer la page : la traduction continue sur GitHub.`);
+  }
 }
+
+// Avertit si on ferme la page pendant un envoi (la traduction, elle, continue sans la page).
+window.addEventListener('beforeunload', (e) => { if (envoiEnCours) { e.preventDefault(); e.returnValue = ''; } });
 
 // ---------- Suivi des traductions en cours ----------
 const jobs = new Map(); // id -> carte
@@ -475,7 +530,7 @@ async function suivreTravaux() {
         const minutes = Math.max(0, Math.round((Date.now() - debut) / 60000));
         carte.temps(`${minutes} min`);
         if (run.status === 'queued' || run.status === 'pending' || run.status === 'waiting') {
-          carte.attente(run.status === 'queued' ? 'En file d\'attente (une traduction à la fois)…' : undefined);
+          carte.attente(run.status === 'queued' ? 'En file d\'attente chez GitHub…' : undefined);
         } else {
           const { jobs: js } = await gh(repo(`/actions/runs/${run.id}/jobs`));
           const steps = (js[0] && js[0].steps) || [];
@@ -649,10 +704,14 @@ $('#btn-save').onclick = async () => {
 const drop = $('#drop');
 drop.onclick = () => $('#file').click();
 drop.onkeydown = (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); $('#file').click(); } };
-$('#file').onchange = (e) => choisirFichier(e.target.files[0]);
+$('#file').onchange = (e) => { ajouterFichiers([...e.target.files]); e.target.value = ''; };
 ['dragenter', 'dragover'].forEach((t) => drop.addEventListener(t, (e) => { e.preventDefault(); drop.classList.add('over'); }));
 ['dragleave', 'drop'].forEach((t) => drop.addEventListener(t, (e) => { e.preventDefault(); drop.classList.remove('over'); }));
-drop.addEventListener('drop', (e) => choisirFichier(e.dataTransfer.files[0]));
+drop.addEventListener('drop', (e) => ajouterFichiers([...e.dataTransfer.files]));
+$('#liste').addEventListener('click', (e) => {
+  const b = e.target.closest('[data-retirer]');
+  if (b) { fichiers.splice(+b.dataset.retirer, 1); dessinerFichiers(); }
+});
 document.querySelectorAll('input[name=source]').forEach((r) => (r.onchange = dessinerCibles));
 $('#cibles').addEventListener('change', majBouton);
 $('#btn-go').onclick = lancer;
