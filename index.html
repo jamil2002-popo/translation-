@@ -62,6 +62,13 @@
   :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
   @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
 
+  /* Écran de mot de passe */
+  .verrou { min-height: 100vh; display: grid; place-items: center; padding-block: 24px;
+    padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+  .verrou form { width: min(380px, 100%); background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 28px 24px; display: grid; gap: 16px; }
+  .verrou .brand { justify-content: center; }
+  .verrou p { margin: 0; text-align: center; color: var(--muted); font-size: 14px; }
+
   /* Barre du haut */
   .topbar { background: var(--surface); border-bottom: 1px solid var(--line); }
   .choix-langue { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; padding: 2px; background: var(--surface-2); }
@@ -257,6 +264,24 @@
 </style>
 </head>
 <body>
+<div id="verrou" class="verrou" hidden>
+  <form id="form-verrou" autocomplete="off">
+    <div class="brand">
+      <span class="logo" aria-hidden="true">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 10v4M8 6v12M12 9v6M16 4v16M20 10v4"/></svg>
+      </span>
+      <div class="brand-nom">Bethel Baptist Church</div>
+    </div>
+    <p data-i18n="verrou_intro">Entre le mot de passe pour accéder aux traductions.</p>
+    <div class="champ">
+      <label class="etiquette" for="mdp" data-i18n="mot_de_passe">Mot de passe</label>
+      <input id="mdp" type="password" autocomplete="current-password" required>
+    </div>
+    <button class="primary" type="submit" data-i18n="entrer">Entrer</button>
+    <span id="mdp-msg" class="status err" aria-live="polite"></span>
+  </form>
+</div>
+<div id="appli">
 <header class="topbar">
   <div class="topbar-in">
     <div class="brand">
@@ -363,12 +388,14 @@
     </div>
   </div>
 </main>
+</div>
 
 <script>
 // ---------- Langue de la page (français / anglais) ----------
 const TEXTES = {
   fr: {
     sous_titre: 'Traduction des prêches', reglages: 'Réglages',
+    verrou_intro: 'Entre le mot de passe pour accéder aux traductions.', mot_de_passe: 'Mot de passe', entrer: 'Entrer', mdp_faux: 'Mot de passe incorrect.',
     connecte: 'Connecté à GitHub', non_connecte: 'Non connecté', pb_connexion: 'Problème de connexion',
     settings_titre: 'Connexion à GitHub',
     settings_intro: "La traduction tourne gratuitement sur les serveurs de GitHub. Cette page a besoin d'une clé d'accès, à créer une seule fois :",
@@ -406,6 +433,7 @@ const TEXTES = {
   },
   en: {
     sous_titre: 'Sermon translation', reglages: 'Settings',
+    verrou_intro: 'Enter the password to access the translations.', mot_de_passe: 'Password', entrer: 'Enter', mdp_faux: 'Incorrect password.',
     connecte: 'Connected to GitHub', non_connecte: 'Not connected', pb_connexion: 'Connection problem',
     settings_titre: 'GitHub connection',
     settings_intro: 'Translation runs for free on GitHub servers. This page needs an access token, created once:',
@@ -1248,10 +1276,48 @@ document.querySelectorAll('input[name=source]').forEach((r) => (r.onchange = des
 $('#cibles').addEventListener('change', majBouton);
 $('#btn-go').onclick = lancer;
 
+// ---------- Mot de passe ----------
+// Empreinte SHA-256 de « bethel: » + mot de passe. Vide = pas de mot de passe.
+// Le mot de passe protège l'accès à cette page ; il ne chiffre pas les fichiers
+// rangés sur GitHub.
+const EMPREINTE_MDP = '';
+
+async function empreinte(mdp) {
+  const octets = await crypto.subtle.digest('SHA-256', new TextEncoder().encode('bethel:' + mdp));
+  return [...new Uint8Array(octets)].map((b) => b.toString(16).padStart(2, '0')).join('');
+}
+
+function deverrouille() {
+  if (!EMPREINTE_MDP) return true;
+  try { return localStorage.getItem('preches-acces') === EMPREINTE_MDP; } catch { return false; }
+}
+
 // ---------- Démarrage ----------
+function demarrer() {
+  $('#verrou').hidden = true;
+  $('#appli').hidden = false;
+  dessinerCibles();
+  if (cfg.token) { chargerBibliotheque(); suivreTravaux(); } else { ouvrirReglages(); }
+}
+
 appliquerTextes();
-dessinerCibles();
-if (cfg.token) { chargerBibliotheque(); suivreTravaux(); } else { ouvrirReglages(); }
+if (deverrouille()) {
+  demarrer();
+} else {
+  $('#appli').hidden = true;
+  $('#verrou').hidden = false;
+  $('#mdp').focus();
+  $('#form-verrou').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if (await empreinte($('#mdp').value) === EMPREINTE_MDP) {
+      try { localStorage.setItem('preches-acces', EMPREINTE_MDP); } catch {}
+      demarrer();
+    } else {
+      $('#mdp-msg').textContent = t('mdp_faux');
+      $('#mdp').select();
+    }
+  });
+}
 </script>
 </body>
 </html>
