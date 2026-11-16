@@ -11,7 +11,7 @@ jobs:
         with: { ref: preches, path: preches, sparse-checkout: resultats, fetch-depth: 1 }
       - uses: actions/setup-python@v5
         with: { python-version: "3.12" }
-      - run: pip install edge-tts piper-tts
+      - run: pip install edge-tts piper-tts imageio-ffmpeg
       - shell: python
         run: |
           import sys; sys.path.insert(0, ".")
@@ -34,9 +34,6 @@ jobs:
           async def main():
               ms = t.decouper(txt, 1500)[:18]
               for v in ["ru-RU-SvetlanaNeural", "ru-RU-DmitryNeural"]:
-                  t0 = time.time(); ok = sum([await un(m, v) for m in ms])
-                  print(f"RESULTAT {v}: {ok}/{len(ms)} en {time.time()-t0:.0f} s")
-              for v in ["ru-RU-SvetlanaNeural", "ru-RU-DmitryNeural"]:
                   for _ in range(4):
                       if await un(extrait, v, f"echantillons/microsoft-{v.split('-')[2]}.mp3"): break
           asyncio.run(main())
@@ -44,12 +41,8 @@ jobs:
           for nom in ["ruslan", "denis", "dmitri"]:
               for ext in ("onnx", "onnx.json"):
                   subprocess.run(["curl", "-sSLf", "-o", f"{nom}.{ext}", f"{base}/{nom}/medium/ru_RU-{nom}-medium.{ext}"], check=True)
-              t0 = time.time()
-              subprocess.run(["piper", "-m", f"{nom}.onnx", "-f", f"{nom}.wav"], input=txt[:15000].encode(), check=True, capture_output=True)
-              d = time.time() - t0
-              with wave.open(f"{nom}.wav") as w: duree = w.getnframes() / w.getframerate()
-              print(f"RESULTAT piper {nom}: {len(txt[:15000])} caractères -> {duree/60:.1f} min d'audio en {d:.0f} s")
               subprocess.run(["piper", "-m", f"{nom}.onnx", "-f", f"e-{nom}.wav"], input=extrait.encode(), check=True, capture_output=True)
-              subprocess.run(["ffmpeg", "-loglevel", "error", "-y", "-i", f"e-{nom}.wav", "-b:a", "64k", f"echantillons/piper-{nom}.mp3"], check=True)
+              import imageio_ffmpeg
+              subprocess.run([imageio_ffmpeg.get_ffmpeg_exe(), "-loglevel", "error", "-y", "-i", f"e-{nom}.wav", "-b:a", "64k", f"echantillons/piper-{nom}.mp3"], check=True)
       - uses: actions/upload-artifact@v4
         with: { name: echantillons, path: echantillons }
