@@ -238,7 +238,11 @@ def traduire_gemini(texte: str, source: str, cible_nom: str) -> str:
         _CLIENT_GEMINI = genai.Client(api_key=os.environ["GEMINI_API_KEY"],
                                       http_options=types.HttpOptions(timeout=180_000))
     client = _CLIENT_GEMINI
-    modele = modele_gemini(client)
+    try:
+        modele = modele_gemini(client)
+    except Exception as e:
+        # Aucun modèle ne répond (quota épuisé, service saturé) : inutile de réessayer à chaque partie.
+        raise QuotaEpuise(str(e)[:120]) from e
     prompt = (
         f"Translate this Christian sermon excerpt from '{source}' into "
         f"{cible_nom}. Keep the tone of a preacher, translate Bible "
@@ -327,7 +331,7 @@ def traduire(texte: str, source: str, langue: str, moteur: str) -> str:
                 resultat.append(traduire_gemini(morceau, source, NOMS_ANGLAIS[langue]))
                 continue
             except QuotaEpuise as e:
-                print(f"      Quota Gemini du jour épuisé ({e}). Suite avec Google.")
+                print(f"      Gemini indisponible ({e}). Suite avec Google.")
                 gemini_ok = False
             except Exception as e:
                 print(f"      Gemini a échoué sur cette partie ({str(e)[:100]}). Google prend le relais.")
