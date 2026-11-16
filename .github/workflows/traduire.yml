@@ -17,7 +17,8 @@ on:
         description: "Modèle Whisper (base, small, medium)"
         default: "small"
 
-run-name: "Traduction ${{ inputs.fichier }}"
+# Les langues figurent dans le titre : la page s'en sert pour afficher le détail.
+run-name: "Traduction ${{ inputs.fichier }} · ${{ inputs.langues }}"
 
 permissions:
   contents: write
@@ -69,7 +70,7 @@ jobs:
           pip install transformers sentencepiece
           if [ -n "$GEMINI_API_KEY" ]; then pip install google-genai; fi
 
-      - name: Transcription, traduction et voix
+      - name: Transcription
         run: |
           set -euo pipefail
           case "$FICHIER" in entrees/*) ;; *) echo "Chemin invalide : $FICHIER"; exit 1;; esac
@@ -82,10 +83,48 @@ jobs:
           NOM="$(basename "$FICHIER")"; NOM="${NOM%.*}"
           MOTEUR=google
           if [ -n "$GEMINI_API_KEY" ]; then MOTEUR=gemini; fi
-          # shellcheck disable=SC2086
-          python traduire_preche.py "preches/$FICHIER" \
-            --langues $LANGUES --source "$SOURCE" --modele "$MODELE" \
-            --moteur "$MOTEUR" --sortie "preches/resultats/$NOM"
+          echo "NOM=$NOM" >> "$GITHUB_ENV"
+          echo "MOTEUR=$MOTEUR" >> "$GITHUB_ENV"
+          python traduire_preche.py "preches/$FICHIER" --transcription-seule \
+            --source "$SOURCE" --modele "$MODELE" --sortie "preches/resultats/$NOM"
+
+      # Une étape par langue : la page suit l'avancement de chacune.
+      # continue-on-error : une langue en échec n'empêche pas les suivantes.
+      - name: Chinois
+        id: zh
+        if: ${{ contains(format(' {0} ', inputs.langues), ' zh ') }}
+        continue-on-error: true
+        run: python traduire_preche.py "preches/$FICHIER" --langues zh --source "$SOURCE" --moteur "$MOTEUR" --sortie "preches/resultats/$NOM"
+
+      - name: Espagnol
+        id: es
+        if: ${{ contains(format(' {0} ', inputs.langues), ' es ') }}
+        continue-on-error: true
+        run: python traduire_preche.py "preches/$FICHIER" --langues es --source "$SOURCE" --moteur "$MOTEUR" --sortie "preches/resultats/$NOM"
+
+      - name: Russe
+        id: ru
+        if: ${{ contains(format(' {0} ', inputs.langues), ' ru ') }}
+        continue-on-error: true
+        run: python traduire_preche.py "preches/$FICHIER" --langues ru --source "$SOURCE" --moteur "$MOTEUR" --sortie "preches/resultats/$NOM"
+
+      - name: Hindi
+        id: hi
+        if: ${{ contains(format(' {0} ', inputs.langues), ' hi ') }}
+        continue-on-error: true
+        run: python traduire_preche.py "preches/$FICHIER" --langues hi --source "$SOURCE" --moteur "$MOTEUR" --sortie "preches/resultats/$NOM"
+
+      - name: Anglais
+        id: en
+        if: ${{ contains(format(' {0} ', inputs.langues), ' en ') }}
+        continue-on-error: true
+        run: python traduire_preche.py "preches/$FICHIER" --langues en --source "$SOURCE" --moteur "$MOTEUR" --sortie "preches/resultats/$NOM"
+
+      - name: Français
+        id: fr
+        if: ${{ contains(format(' {0} ', inputs.langues), ' fr ') }}
+        continue-on-error: true
+        run: python traduire_preche.py "preches/$FICHIER" --langues fr --source "$SOURCE" --moteur "$MOTEUR" --sortie "preches/resultats/$NOM"
 
       # Même en cas d'échec, on garde ce qui est fini (ex. la transcription) :
       # la prochaine tentative reprendra là où ça s'est arrêté.
@@ -114,3 +153,12 @@ jobs:
             sleep $((i * 5 + RANDOM % 10))
           done
           exit 1
+
+      - name: Vérification
+        if: always()
+        run: |
+          echo "zh=${{ steps.zh.outcome }} es=${{ steps.es.outcome }} ru=${{ steps.ru.outcome }} hi=${{ steps.hi.outcome }} en=${{ steps.en.outcome }} fr=${{ steps.fr.outcome }}"
+          if echo "${{ steps.zh.outcome }} ${{ steps.es.outcome }} ${{ steps.ru.outcome }} ${{ steps.hi.outcome }} ${{ steps.en.outcome }} ${{ steps.fr.outcome }}" | grep -q failure; then
+            echo "Au moins une langue a échoué : relance la traduction pour la réessayer."
+            exit 1
+          fi

@@ -2,242 +2,354 @@
 <html lang="fr">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Traduction de prêches</title>
-<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%238a5a2b'/%3E%3Cg fill='none' stroke='%23fff' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12.5 22V9.5l11-2V20'/%3E%3Ccircle cx='9.5' cy='22' r='3'/%3E%3Ccircle cx='20.5' cy='20' r='3'/%3E%3C/g%3E%3C/svg%3E">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%231c5d6e'/%3E%3Cg stroke='%23fff' stroke-width='2.6' stroke-linecap='round'%3E%3Cpath d='M8 13v6M12.5 9v14M17 12v8M21.5 7v18M26 14v4'/%3E%3C/g%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
+  /* Mise en page : outil de travail. Barre du haut, puis deux colonnes
+     (nouvelle traduction | suivi + bibliothèque) qui s'empilent sur téléphone. */
   :root {
-    --bg: #f6f3ee;
-    --card: #ffffff;
-    --ink: #1f1d1a;
-    --muted: #6d6860;
-    --line: #e6e0d6;
-    --accent: #8a5a2b;
+    --bg: #f3f4f5;
+    --surface: #ffffff;
+    --surface-2: #f7f8f9;
+    --ink: #14181c;
+    --muted: #5c656e;
+    --faint: #8a9299;
+    --line: #e0e3e7;
+    --accent: #1c5d6e;
+    --accent-hover: #154a58;
+    --accent-soft: #e4eff1;
     --accent-ink: #ffffff;
-    --accent-soft: #f3e9dd;
-    --ok: #2f7a4f;
-    --ok-soft: #e4f2e9;
-    --err: #b3261e;
-    --err-soft: #fbe7e5;
-    --shadow: 0 1px 2px rgba(40,30,20,.05), 0 8px 24px rgba(40,30,20,.06);
+    --ok: #1d7549;
+    --ok-soft: #e2f2e9;
+    --err: #b42318;
+    --err-soft: #fcebe9;
+    --font-ui: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    --font-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    --radius: 10px;
   }
   @media (prefers-color-scheme: dark) {
-    :root {
-      --bg: #171512;
-      --card: #211e1a;
-      --ink: #f1ece4;
-      --muted: #a39b8f;
-      --line: #36312a;
-      --accent: #d9a36a;
-      --accent-ink: #1b1510;
-      --accent-soft: #33281d;
-      --ok: #7cc79a;
-      --ok-soft: #1f3327;
-      --err: #f08b82;
-      --err-soft: #3a2220;
-      --shadow: none;
+    :root:not([data-theme="light"]) {
+      --bg: #0e1113; --surface: #161a1d; --surface-2: #1b2024; --ink: #e6eaed; --muted: #9aa3ab;
+      --faint: #6f7880; --line: #272d32; --accent: #6cb6c6; --accent-hover: #8ac7d4; --accent-soft: #16292e;
+      --accent-ink: #0b1a1e; --ok: #5cc08b; --ok-soft: #14281d; --err: #f2877c; --err-soft: #33191a;
+      color-scheme: dark;
     }
   }
+  :root[data-theme="dark"] {
+    --bg: #0e1113; --surface: #161a1d; --surface-2: #1b2024; --ink: #e6eaed; --muted: #9aa3ab;
+    --faint: #6f7880; --line: #272d32; --accent: #6cb6c6; --accent-hover: #8ac7d4; --accent-soft: #16292e;
+    --accent-ink: #0b1a1e; --ok: #5cc08b; --ok-soft: #14281d; --err: #f2877c; --err-soft: #33191a;
+    color-scheme: dark;
+  }
+
   * { box-sizing: border-box; }
-  body {
-    margin: 0;
-    background: var(--bg);
-    color: var(--ink);
-    font: 16px/1.5 Inter, system-ui, -apple-system, "Segoe UI", sans-serif;
+  html { -webkit-text-size-adjust: 100%; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.5 var(--font-ui); }
+  [hidden] { display: none !important; }
+  a { color: var(--accent); }
+  code { font-family: var(--font-mono); font-size: .9em; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
+
+  /* Barre du haut */
+  .topbar { background: var(--surface); border-bottom: 1px solid var(--line); }
+  .topbar-in, .page {
+    max-width: 1120px; margin: 0 auto;
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
   }
-  main { max-width: 760px; margin: 0 auto; padding: 48px 16px 80px; }
-  header { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 32px; }
-  h1 { font-family: Fraunces, Georgia, serif; font-weight: 600; font-size: clamp(28px, 6vw, 40px); line-height: 1.1; margin: 0 0 8px; letter-spacing: -.01em; }
-  .sub { color: var(--muted); margin: 0; }
-  h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); font-weight: 600; margin: 40px 0 12px; }
-  .card { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 24px; box-shadow: var(--shadow); }
+  .topbar-in { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding-block: 12px; }
+  .brand { display: flex; align-items: center; gap: 12px; min-width: 0; }
+  .logo { width: 32px; height: 32px; flex: none; border-radius: 7px; background: var(--accent); color: var(--accent-ink); display: grid; place-items: center; }
+  .brand-nom { font-weight: 600; font-size: 16px; letter-spacing: -.005em; }
+  .brand-sous { color: var(--muted); font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .topbar-actions { display: flex; align-items: center; gap: 12px; }
+  .etat { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--muted); white-space: nowrap; }
+  .etat::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--faint); }
+  .etat.ok::before { background: var(--ok); }
+  .etat.err::before { background: var(--err); }
+  @media (max-width: 560px) { .etat { display: none; } .brand-sous { display: none; } }
+
+  /* Page */
+  .page { padding-block: 24px 64px; display: grid; gap: 20px; }
+  .grille { display: grid; gap: 20px; align-items: start; }
+  .colonne { display: grid; gap: 20px; min-width: 0; }
+  @media (min-width: 900px) {
+    .grille { grid-template-columns: 360px minmax(0, 1fr); }
+    .envoi { position: sticky; top: 20px; }
+  }
+
+  .panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); min-width: 0; }
+  .panel-tete { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; padding: 14px 20px; border-bottom: 1px solid var(--line); }
+  .panel-tete h2 { margin: 0; font-size: 14px; font-weight: 600; }
+  .compte { font-family: var(--font-mono); font-size: 12px; color: var(--muted); }
+  .panel-corps { padding: 20px; display: grid; gap: 20px; }
+
+  /* Boutons et champs */
   button, .btn {
-    font: inherit; font-weight: 500; font-size: 15px;
-    border: 1px solid var(--line); background: var(--card); color: var(--ink);
-    border-radius: 10px; padding: 9px 16px; cursor: pointer; text-decoration: none;
-    display: inline-flex; align-items: center; gap: 6px;
+    font: inherit; font-size: 14px; font-weight: 500; line-height: 1.2;
+    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+    padding: 8px 14px; border-radius: 8px; cursor: pointer; text-decoration: none;
+    border: 1px solid var(--line); background: var(--surface); color: var(--ink);
+    transition: background .12s, border-color .12s;
   }
-  button:hover, .btn:hover { border-color: var(--accent); }
-  button.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
-  button.primary:disabled { opacity: .45; cursor: not-allowed; }
-  button.small, .btn.small { padding: 5px 11px; font-size: 14px; }
-  button.link { border: none; background: none; padding: 0; color: var(--muted); text-decoration: underline; font-weight: 400; }
+  button:hover { border-color: var(--faint); }
+  button:disabled { cursor: not-allowed; opacity: .5; }
+  button.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); padding: 11px 16px; font-size: 15px; }
+  button.primary:hover:not(:disabled) { background: var(--accent-hover); border-color: var(--accent-hover); }
+  button.small { padding: 5px 10px; font-size: 13px; }
+  button.link { border: none; background: none; padding: 0; color: var(--muted); font-weight: 400; text-decoration: underline; text-underline-offset: 2px; }
+  button.link:hover { color: var(--ink); }
   input[type=password], input[type=text], select {
-    font: inherit; width: 100%; padding: 10px 12px; border-radius: 10px;
-    border: 1px solid var(--line); background: var(--bg); color: var(--ink);
+    font: inherit; width: 100%; padding: 9px 11px; border-radius: 8px;
+    border: 1px solid var(--line); background: var(--surface-2); color: var(--ink);
   }
-  label.field { display: block; font-weight: 500; margin: 16px 0 6px; }
-  .hint { color: var(--muted); font-size: 14px; }
-  .hint a { color: var(--accent); }
-  ol.hint { padding-left: 20px; margin: 8px 0 0; }
-  ol.hint li { margin: 4px 0; }
+  .champ { display: grid; gap: 8px; min-width: 0; }
+  .champ > .etiquette { font-size: 13px; font-weight: 500; color: var(--muted); }
+  .hint { color: var(--muted); font-size: 13px; }
+
+  /* Réglages */
+  #settings { padding: 20px; display: grid; gap: 14px; max-width: 720px; }
+  #settings h2 { margin: 0; font-size: 16px; }
+  #settings ol { margin: 0; padding-left: 20px; display: grid; gap: 4px; color: var(--muted); font-size: 14px; }
+  .actions { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
 
   /* Zone de dépôt */
   .drop {
-    border: 2px dashed var(--line); border-radius: 14px; padding: 40px 16px;
-    text-align: center; cursor: pointer; transition: border-color .15s, background .15s;
+    border: 1.5px dashed var(--line); border-radius: var(--radius); padding: 28px 16px;
+    text-align: center; cursor: pointer; background: var(--surface-2);
+    display: grid; justify-items: center; gap: 4px; transition: border-color .12s, background .12s;
   }
   .drop:hover, .drop.over { border-color: var(--accent); background: var(--accent-soft); }
-  .drop .icon { width: 48px; height: 48px; margin: 0 auto 12px; color: var(--accent); }
-  .drop strong { display: block; font-size: 18px; margin-bottom: 4px; }
-  .drop.has-file { border-style: solid; border-color: var(--accent); background: var(--accent-soft); }
-
-  .liste { list-style: none; margin: 12px 0 0; padding: 0; }
+  .drop.has-file { border-style: solid; border-color: var(--accent); }
+  .drop .icon { color: var(--accent); margin-bottom: 6px; }
+  .drop strong { font-size: 15px; font-weight: 600; }
+  .liste { list-style: none; margin: -8px 0 0; padding: 0; }
   .liste:empty { display: none; }
-  .liste li { display: grid; grid-template-columns: 1fr auto auto; gap: 12px; align-items: center; padding: 8px 4px; border-bottom: 1px solid var(--line); }
-  .liste .nom { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
-  .liste button.link { text-decoration: none; font-size: 16px; padding: 2px 6px; }
+  .liste li { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 10px; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--line); font-size: 14px; }
+  .liste .nom { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .liste .taille { font-family: var(--font-mono); font-size: 12px; color: var(--muted); }
+  .liste button.link { text-decoration: none; font-size: 15px; padding: 2px 4px; }
   .liste button.link:hover { color: var(--err); }
-  .options { display: grid; grid-template-columns: 1fr 1fr; gap: 0 16px; }
-  @media (max-width: 560px) { .options { grid-template-columns: 1fr; } }
-  .chips { display: flex; flex-wrap: wrap; gap: 8px; }
-  .chip { position: relative; }
-  .chip input { position: absolute; opacity: 0; pointer-events: none; }
-  .chip span {
-    display: inline-block; padding: 7px 14px; border-radius: 999px;
-    border: 1px solid var(--line); cursor: pointer; user-select: none; font-size: 15px;
-  }
-  .chip input:checked + span { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
-  .chip input:focus-visible + span { outline: 2px solid var(--accent); outline-offset: 2px; }
-  .actions { margin-top: 24px; display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
 
-  /* Suivi */
-  .job { margin-top: 12px; }
-  .job-head { display: flex; justify-content: space-between; gap: 12px; align-items: baseline; flex-wrap: wrap; }
-  .job-title { font-weight: 600; word-break: break-word; }
-  .bar-ligne { display: flex; align-items: center; gap: 12px; margin: 12px 0 8px; }
-  .bar { flex: 1; height: 6px; background: var(--line); border-radius: 99px; overflow: hidden; }
-  .pct { font-size: 14px; font-weight: 600; color: var(--accent); font-variant-numeric: tabular-nums; min-width: 3.2em; text-align: right; }
-  .pct:empty { display: none; }
-  .bar > div { height: 100%; background: var(--accent); width: 0; transition: width .4s; }
-  .bar.indeterminate > div { width: 30%; animation: slide 1.4s ease-in-out infinite; }
-  @keyframes slide { from { transform: translateX(-100%); } to { transform: translateX(340%); } }
-  .status { font-size: 14px; color: var(--muted); }
-  .status.ok { color: var(--ok); }
-  .status.err { color: var(--err); }
+  /* Choix de la langue source : contrôle segmenté */
+  .segment { display: grid; grid-template-columns: 1fr 1fr; border: 1px solid var(--line); border-radius: 8px; padding: 3px; background: var(--surface-2); }
+  .segment label { position: relative; }
+  .segment input { position: absolute; opacity: 0; pointer-events: none; }
+  .segment span { display: block; text-align: center; padding: 6px 8px; border-radius: 6px; font-size: 14px; cursor: pointer; color: var(--muted); }
+  .segment input:checked + span { background: var(--surface); color: var(--ink); font-weight: 500; box-shadow: 0 0 0 1px var(--line); }
+  .segment input:focus-visible + span { outline: 2px solid var(--accent); }
 
-  /* Bibliothèque */
-  .liste-preches { padding: 0; overflow: hidden; }
-  .preche + .preche { border-top: 1px solid var(--line); }
-  .preche summary {
-    list-style: none; cursor: pointer; display: grid; grid-template-columns: 150px 1fr 20px;
-    gap: 16px; align-items: center; padding: 16px 24px;
+  /* Langues cibles : cases à cocher */
+  .cibles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+  .cible { position: relative; }
+  .cible input { position: absolute; opacity: 0; pointer-events: none; }
+  .cible input + span {
+    display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: 8px;
+    border: 1px solid var(--line); cursor: pointer; font-size: 14px; user-select: none;
   }
-  .preche summary::-webkit-details-marker { display: none; }
-  .preche summary:hover { background: var(--accent-soft); }
-  .preche summary:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
-  .preche-date { color: var(--accent); font-weight: 600; font-size: 14px; font-variant-numeric: tabular-nums; }
-  .preche-titre { font-family: Fraunces, Georgia, serif; font-size: 18px; font-weight: 600; min-width: 0; overflow-wrap: anywhere; }
-  .chevron { color: var(--muted); transition: transform .15s; }
-  .preche[open] .chevron { transform: rotate(90deg); }
-  .preche[open] summary { background: var(--accent-soft); }
-  .preche-corps { padding: 4px 24px 16px; }
-  .preche-pied { padding-top: 12px; border-top: 1px solid var(--line); font-size: 13px; }
-  @media (max-width: 560px) {
-    .preche summary { grid-template-columns: 1fr 20px; gap: 4px 12px; padding: 14px 16px; }
-    .preche-date { grid-column: 1; }
-    .preche-titre { grid-column: 1; grid-row: 2; }
-    .chevron { grid-row: 1 / 3; grid-column: 2; }
-    .preche-corps { padding: 4px 16px 16px; }
-    .preche .lang { grid-template-columns: 44px 1fr; row-gap: 8px; }
-    .preche .lang-btns { grid-column: 1 / -1; justify-content: flex-start; }
+  .cible input + span::before {
+    content: ""; flex: none; width: 15px; height: 15px; border-radius: 4px; border: 1.5px solid var(--faint);
+    background: var(--surface) center / 11px no-repeat;
   }
-  .lang:first-child { border-top: none; }
-  .lang { display: grid; grid-template-columns: 44px 1fr auto; align-items: center; gap: 12px; padding: 10px 0; border-top: 1px solid var(--line); }
-  .badge { font-size: 12px; font-weight: 600; letter-spacing: .04em; text-align: center; padding: 4px 0; border-radius: 6px; background: var(--accent-soft); color: var(--accent); }
-  .lang-btns { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
-  .lang audio { grid-column: 1 / -1; width: 100%; height: 40px; }
-  .lang pre { grid-column: 1 / -1; white-space: pre-wrap; font: 14px/1.6 Inter, system-ui, sans-serif; background: var(--bg); border-radius: 10px; padding: 12px; margin: 0; max-height: 260px; overflow: auto; }
-  .empty { color: var(--muted); text-align: center; padding: 24px; }
-  .notice { border-radius: 12px; padding: 12px 16px; font-size: 15px; margin-top: 16px; }
+  .cible input:checked + span { border-color: var(--accent); background: var(--accent-soft); }
+  .cible input:checked + span::before {
+    border-color: var(--accent); background-color: var(--accent);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M2.5 6.2 5 8.5l4.5-5' fill='none' stroke='white' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  }
+  .cible input:focus-visible + span { outline: 2px solid var(--accent); outline-offset: 1px; }
+  .natif { color: var(--muted); font-size: 13px; margin-left: auto; white-space: nowrap; }
+
+  /* Messages */
+  .notice { border-radius: 8px; padding: 10px 12px; font-size: 14px; }
   .notice.err { background: var(--err-soft); color: var(--err); }
   .notice.ok { background: var(--ok-soft); color: var(--ok); }
-  [hidden] { display: none !important; }
+  .vide { padding: 32px 20px; text-align: center; color: var(--muted); font-size: 14px; }
+
+  /* Traductions en cours */
+  .job { padding: 16px 20px; display: grid; gap: 10px; }
+  .job + .job { border-top: 1px solid var(--line); }
+  .job-tete { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+  .job-titre { font-weight: 600; min-width: 0; overflow-wrap: anywhere; }
+  .pct { font-family: var(--font-mono); font-size: 14px; color: var(--accent); white-space: nowrap; }
+  .pct:empty { display: none; }
+  .bar { height: 6px; border-radius: 99px; background: var(--line); overflow: hidden; }
+  .bar > div { height: 100%; width: 0; background: var(--accent); border-radius: inherit; transition: width .5s ease; }
+  .bar.indeterminate > div { width: 30%; animation: slide 1.4s ease-in-out infinite; }
+  @keyframes slide { from { transform: translateX(-100%); } to { transform: translateX(340%); } }
+  .job-pied { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+  .status { font-size: 13px; color: var(--muted); min-width: 0; }
+  .status.err { color: var(--err); }
+  .status.ok { color: var(--ok); }
+  .lien-details { border: none; background: none; padding: 2px 0; color: var(--accent); font-size: 13px; }
+  .lien-details svg { transition: transform .15s; }
+  .lien-details[aria-expanded="true"] svg { transform: rotate(180deg); }
+
+  .etapes { list-style: none; margin: 4px 0 0; padding: 12px 14px; display: grid; gap: 10px; background: var(--surface-2); border: 1px solid var(--line); border-radius: 8px; }
+  .etape { display: grid; grid-template-columns: 18px minmax(0, 150px) minmax(0, 1fr) 44px; gap: 10px; align-items: center; font-size: 13px; }
+  .etape .nom { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .etape .nom small { color: var(--muted); font-size: 12px; margin-left: 4px; }
+  .etape .bar { height: 4px; }
+  .etape .val { font-family: var(--font-mono); font-size: 12px; color: var(--muted); text-align: right; }
+  .puce { width: 14px; height: 14px; border-radius: 50%; border: 1.5px solid var(--faint); display: grid; place-items: center; }
+  .etape.fait .puce { background: var(--ok); border-color: var(--ok); }
+  .etape.fait .puce::after { content: ""; width: 6px; height: 3px; border: 1.5px solid var(--surface); border-top: 0; border-right: 0; transform: rotate(-45deg) translate(1px, -1px); }
+  .etape.fait .bar > div { background: var(--ok); }
+  .etape.encours .puce { border-color: var(--accent); border-top-color: transparent; animation: tourne 1s linear infinite; }
+  .etape.encours .val { color: var(--accent); }
+  .etape.echec .puce { background: var(--err); border-color: var(--err); }
+  .etape.echec .val { color: var(--err); }
+  .etape.attente { color: var(--muted); }
+  @keyframes tourne { to { transform: rotate(360deg); } }
+  @media (max-width: 480px) { .etape { grid-template-columns: 18px minmax(0, 1fr) 70px 40px; } }
+
+  /* Bibliothèque */
+  .preche + .preche { border-top: 1px solid var(--line); }
+  .preche summary {
+    list-style: none; cursor: pointer; display: grid; grid-template-columns: 116px minmax(0, 1fr) 18px;
+    gap: 16px; align-items: center; padding: 13px 20px;
+  }
+  .preche summary::-webkit-details-marker { display: none; }
+  .preche summary:hover { background: var(--surface-2); }
+  .preche summary:focus-visible { outline-offset: -2px; }
+  .preche-date { font-family: var(--font-mono); font-size: 12.5px; color: var(--muted); white-space: nowrap; }
+  .preche-titre { font-weight: 500; overflow-wrap: anywhere; }
+  .preche-langues { display: flex; gap: 4px; }
+  .code { font-family: var(--font-mono); font-size: 11px; padding: 2px 5px; border-radius: 4px; background: var(--surface-2); border: 1px solid var(--line); color: var(--muted); text-transform: uppercase; }
+  .chevron { color: var(--faint); transition: transform .15s; }
+  .preche[open] .chevron { transform: rotate(90deg); }
+  .preche[open] summary { background: var(--surface-2); }
+  .preche-corps { padding: 4px 20px 16px; border-top: 1px solid var(--line); }
+  .preche-pied { padding-top: 12px; font-size: 12.5px; color: var(--muted); display: flex; gap: 6px 12px; flex-wrap: wrap; }
+  .lang { display: grid; grid-template-columns: 34px minmax(0, 1fr) auto; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--line); }
+  .lang-nom { min-width: 0; }
+  .lang-nom small { color: var(--muted); margin-left: 6px; }
+  .lang-btns { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+  .lang audio { grid-column: 1 / -1; width: 100%; height: 40px; }
+  .lang pre { grid-column: 1 / -1; white-space: pre-wrap; font: 14px/1.65 var(--font-ui); background: var(--surface-2); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; margin: 0; max-height: 280px; overflow: auto; }
+  @media (max-width: 640px) {
+    .preche summary { grid-template-columns: minmax(0, 1fr) 18px; gap: 2px 12px; padding: 12px 16px; }
+    .preche-date { grid-column: 1; }
+    .preche-titre { grid-column: 1; grid-row: 2; }
+    .preche-langues { display: none; }
+    .chevron { grid-row: 1 / 3; grid-column: 2; }
+    .preche-corps { padding: 4px 16px 16px; }
+    .lang { grid-template-columns: 34px minmax(0, 1fr); row-gap: 8px; }
+    .lang-btns { grid-column: 1 / -1; justify-content: flex-start; }
+    .panel-tete, .job { padding-left: 16px; padding-right: 16px; }
+    .panel-corps { padding: 16px; }
+  }
 </style>
 </head>
 <body>
-<main>
-  <header>
-    <div>
-      <h1>Traduction de prêches</h1>
-      <p class="sub">Dépose une ou plusieurs prêches en MP3 et récupère-les lues en chinois, espagnol, russe et hindi.</p>
+<header class="topbar">
+  <div class="topbar-in">
+    <div class="brand">
+      <span class="logo" aria-hidden="true">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 10v4M8 6v12M12 9v6M16 4v16M20 10v4"/></svg>
+      </span>
+      <div style="min-width:0">
+        <div class="brand-nom">Traduction de prêches</div>
+        <div class="brand-sous">中文 · Español · Русский · हिन्दी</div>
+      </div>
     </div>
-    <button id="btn-settings" class="small" title="Réglages">Réglages</button>
-  </header>
+    <div class="topbar-actions">
+      <span id="connexion" class="etat">Non connecté</span>
+      <button id="btn-settings" type="button">Réglages</button>
+    </div>
+  </div>
+</header>
 
+<main class="page">
   <!-- Réglages : clé GitHub -->
-  <section id="settings" class="card" hidden>
-    <strong>Connexion à GitHub</strong>
-    <p class="hint">La traduction tourne gratuitement sur les serveurs de GitHub. Cette page a besoin d'une clé d'accès, à créer une seule fois :</p>
-    <ol class="hint">
+  <section id="settings" class="panel" hidden>
+    <h2>Connexion à GitHub</h2>
+    <p class="hint" style="margin:0">La traduction tourne gratuitement sur les serveurs de GitHub. Cette page a besoin d'une clé d'accès, à créer une seule fois :</p>
+    <ol>
       <li>Ouvre <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">github.com/settings/personal-access-tokens/new</a>.</li>
-      <li>Donne-lui un nom (ex. « Traduction ») et choisis une expiration (ex. 1 an).</li>
-      <li><em>Repository access</em> → <em>Only select repositories</em> → choisis <code>translation-</code>.</li>
-      <li><em>Permissions</em> → <em>Repository permissions</em> : <strong>Actions</strong> = Read and write, <strong>Contents</strong> = Read and write.</li>
+      <li>Donne-lui un nom (ex. « Traduction ») et une expiration (ex. 1 an).</li>
+      <li><em>Repository access</em> → <em>Only select repositories</em> → <code>translation-</code>.</li>
+      <li><em>Repository permissions</em> : <strong>Actions</strong> et <strong>Contents</strong> en « Read and write ».</li>
       <li>Clique sur <em>Generate token</em>, copie la clé et colle-la ci-dessous.</li>
     </ol>
-    <label class="field" for="token">Clé d'accès GitHub</label>
-    <input id="token" type="password" placeholder="github_pat_…" autocomplete="off">
-    <label class="field" for="repo">Repo</label>
-    <input id="repo" type="text" value="jamil2002-popo/translation-">
-    <p class="hint">La clé reste uniquement dans ce navigateur, sur cet ordinateur.</p>
+    <div class="champ">
+      <label class="etiquette" for="token">Clé d'accès GitHub</label>
+      <input id="token" type="password" placeholder="github_pat_…" autocomplete="off">
+    </div>
+    <div class="champ">
+      <label class="etiquette" for="repo">Repo</label>
+      <input id="repo" type="text" value="jamil2002-popo/translation-">
+    </div>
+    <p class="hint" style="margin:0">La clé reste uniquement dans ce navigateur, sur cet ordinateur.</p>
     <div class="actions">
-      <button id="btn-save" class="primary">Enregistrer</button>
+      <button id="btn-save" class="primary" type="button">Enregistrer</button>
       <span id="settings-msg" class="status"></span>
     </div>
   </section>
 
-  <!-- Envoi -->
-  <section id="upload" class="card" style="margin-top:16px">
-    <div id="drop" class="drop" tabindex="0" role="button" aria-label="Choisir des fichiers audio">
-      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-        <path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>
-      </svg>
-      <strong id="drop-title">Dépose tes MP3 ici</strong>
-      <span id="drop-sub" class="hint">ou clique pour choisir des fichiers (MP3, M4A, WAV — 500 Mo max chacun)</span>
-      <input id="file" type="file" accept="audio/*,.mp3,.m4a,.wav,.ogg" multiple hidden>
-    </div>
-    <ul id="liste" class="liste"></ul>
-
-    <div class="options">
-      <div>
-        <label class="field">Langue de la prêche</label>
-        <div class="chips" id="source">
-          <label class="chip"><input type="radio" name="source" value="en" checked><span>Anglais</span></label>
-          <label class="chip"><input type="radio" name="source" value="fr"><span>Français</span></label>
+  <div class="grille">
+    <!-- Envoi -->
+    <section id="upload" class="panel envoi" aria-labelledby="t-envoi">
+      <div class="panel-tete"><h2 id="t-envoi">Nouvelle traduction</h2></div>
+      <div class="panel-corps">
+        <div id="drop" class="drop" tabindex="0" role="button" aria-label="Choisir des fichiers audio">
+          <svg class="icon" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M12 16V4M7 9l5-5 5 5"/><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/>
+          </svg>
+          <strong id="drop-title">Dépose tes MP3 ici</strong>
+          <span id="drop-sub" class="hint">ou clique pour choisir des fichiers (MP3, M4A, WAV — 500 Mo max chacun)</span>
+          <input id="file" type="file" accept="audio/*,.mp3,.m4a,.wav,.ogg" multiple hidden>
         </div>
-      </div>
-      <div>
-        <label class="field" for="modele">Qualité de l'écoute</label>
-        <select id="modele">
-          <option value="base">Rapide</option>
-          <option value="small" selected>Normale (recommandée)</option>
-          <option value="medium">Précise (2 à 3 fois plus lent)</option>
-        </select>
-      </div>
-    </div>
-    <label class="field">Traduire en</label>
-    <div class="chips" id="cibles"></div>
+        <ul id="liste" class="liste"></ul>
 
-    <div class="actions">
-      <button id="btn-go" class="primary" disabled>Traduire</button>
-      <span class="hint">Compte environ 1 h 30 pour une prêche de 45 minutes. La page affiche une estimation pendant la traduction.</span>
-    </div>
-    <div id="upload-msg"></div>
-  </section>
+        <div class="champ">
+          <span class="etiquette" id="l-source">Langue de la prêche</span>
+          <div class="segment" id="source" role="radiogroup" aria-labelledby="l-source">
+            <label><input type="radio" name="source" value="en" checked><span>Anglais</span></label>
+            <label><input type="radio" name="source" value="fr"><span>Français</span></label>
+          </div>
+        </div>
 
-  <!-- Traductions en cours -->
-  <div id="jobs-wrap" hidden>
-    <h2>En cours</h2>
-    <div id="jobs"></div>
+        <div class="champ">
+          <span class="etiquette" id="l-cibles">Traduire en</span>
+          <div class="cibles" id="cibles" role="group" aria-labelledby="l-cibles"></div>
+        </div>
+
+        <div class="champ">
+          <label class="etiquette" for="modele">Qualité de la transcription</label>
+          <select id="modele">
+            <option value="base">Rapide</option>
+            <option value="small" selected>Normale (recommandée)</option>
+            <option value="medium">Précise (2 à 3 fois plus lent)</option>
+          </select>
+        </div>
+
+        <div class="champ">
+          <button id="btn-go" class="primary" type="button" disabled>Traduire</button>
+          <span class="hint">Environ 1 h 30 pour une prêche de 45 minutes. Tu peux fermer la page une fois l'envoi terminé.</span>
+        </div>
+        <div id="upload-msg"></div>
+      </div>
+    </section>
+
+    <div class="colonne">
+      <!-- Traductions en cours -->
+      <section id="jobs-wrap" class="panel" hidden aria-labelledby="t-jobs">
+        <div class="panel-tete"><h2 id="t-jobs">En cours</h2><span id="jobs-count" class="compte"></span></div>
+        <div id="jobs"></div>
+      </section>
+
+      <!-- Bibliothèque -->
+      <section class="panel" aria-labelledby="t-lib">
+        <div class="panel-tete"><h2 id="t-lib">Prêches traduites</h2><span id="lib-count" class="compte"></span></div>
+        <div id="library"><div class="vide">Connecte-toi dans les réglages pour voir tes prêches.</div></div>
+      </section>
+    </div>
   </div>
-
-  <!-- Bibliothèque -->
-  <h2>Prêches traduites</h2>
-  <div id="library"><div class="card empty">Connecte-toi dans les réglages pour voir tes prêches.</div></div>
 </main>
 
 <script>
@@ -245,6 +357,7 @@ const LANGS = {
   zh: 'Chinois', es: 'Espagnol', ru: 'Russe', hi: 'Hindi',
   en: 'Anglais', fr: 'Français', pt: 'Portugais', ar: 'Arabe',
 };
+const NATIF = { zh: '中文', es: 'Español', ru: 'Русский', hi: 'हिन्दी', en: 'English', fr: 'Français', pt: 'Português', ar: 'العربية' };
 const CIBLES = ['zh', 'es', 'ru', 'hi', 'en', 'fr'];
 const PAR_DEFAUT = ['zh', 'es', 'ru', 'hi'];
 const BRANCH = 'preches';
@@ -355,7 +468,7 @@ function dessinerCibles() {
   const premiere = !$('#cibles').children.length;
   $('#cibles').innerHTML = CIBLES.filter((l) => l !== source).map((l) => {
     const on = premiere ? PAR_DEFAUT.includes(l) : coches.has(l);
-    return `<label class="chip"><input type="checkbox" value="${l}" ${on ? 'checked' : ''}><span>${LANGS[l]}</span></label>`;
+    return `<label class="cible"><input type="checkbox" value="${l}" ${on ? 'checked' : ''}><span>${LANGS[l]}${NATIF[l] !== LANGS[l] ? `<small class="natif">${NATIF[l]}</small>` : ''}</span></label>`;
   }).join('');
   majBouton();
 }
@@ -379,7 +492,7 @@ function dessinerFichiers() {
     $('#drop-sub').textContent = 'clique ou dépose d\'autres fichiers pour en ajouter';
   }
   $('#liste').innerHTML = fichiers.map((f, i) => `
-    <li><span class="nom">${esc(f.name)}</span><span class="hint">${(f.size / 1048576).toFixed(1)} Mo</span>
+    <li><span class="nom">${esc(f.name)}</span><span class="taille">${(f.size / 1048576).toFixed(1)} Mo</span>
     <button class="link" data-retirer="${i}" title="Retirer" aria-label="Retirer ${esc(f.name)}">✕</button></li>`).join('');
   majBouton();
 }
@@ -494,29 +607,60 @@ window.addEventListener('beforeunload', (e) => { if (envoiEnCours) { e.preventDe
 // ---------- Suivi des traductions en cours ----------
 const jobs = new Map(); // id -> carte
 
+const CHEVRON_BAS = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>';
+
+function majCompteJobs() {
+  $('#jobs-wrap').hidden = !jobs.size;
+  $('#jobs-count').textContent = jobs.size ? String(jobs.size) : '';
+}
+
 function ajouterJob(id, texte) {
-  $('#jobs-wrap').hidden = false;
   let el = document.getElementById('job-' + id);
   if (!el) {
     el = document.createElement('div');
-    el.className = 'card job';
+    el.className = 'job';
     el.id = 'job-' + id;
     el.innerHTML = `
-      <div class="job-head"><span class="job-title">${esc(titre(id))}</span><span class="hint temps"></span></div>
-      <div class="bar-ligne"><div class="bar"><div></div></div><span class="pct"></span></div>
-      <div class="status"></div>`;
+      <div class="job-tete"><span class="job-titre">${esc(titre(id))}</span><span class="pct"></span></div>
+      <div class="bar"><div></div></div>
+      <div class="job-pied">
+        <span class="status"></span>
+        <button class="lien-details" type="button" aria-expanded="false" hidden>Détail par langue ${CHEVRON_BAS}</button>
+      </div>
+      <ol class="etapes" hidden></ol>`;
     $('#jobs').prepend(el);
+    const btn = el.querySelector('.lien-details'), liste = el.querySelector('.etapes');
+    btn.onclick = () => {
+      const ouvert = btn.getAttribute('aria-expanded') !== 'true';
+      btn.setAttribute('aria-expanded', String(ouvert));
+      liste.hidden = !ouvert;
+    };
   }
   const bar = el.querySelector('.bar'), st = el.querySelector('.status'), pct = el.querySelector('.pct');
+  const btn = el.querySelector('.lien-details'), liste = el.querySelector('.etapes');
   const carte = {
     el,
     progression(p, t) { bar.classList.remove('indeterminate'); bar.firstElementChild.style.width = `${p * 100}%`; pct.textContent = `${Math.round(p * 100)} %`; st.className = 'status'; st.textContent = t; },
     attente(t = 'En attente d\'un serveur GitHub…') { bar.classList.add('indeterminate'); pct.textContent = ''; st.className = 'status'; st.textContent = t; },
     erreur(t, lien) { bar.classList.remove('indeterminate'); bar.firstElementChild.style.width = '0'; pct.textContent = ''; st.className = 'status err'; st.innerHTML = esc(t) + (lien ? ` <a href="${esc(lien)}" target="_blank" rel="noopener">Voir le détail</a>` : ''); },
-    temps(t) { el.querySelector('.temps').textContent = t; },
+    // Détail par étape : [{ nom, sous, p, etat: 'fait' | 'encours' | 'attente' | 'echec' }]
+    etapes(lignes) {
+      btn.hidden = !lignes || !lignes.length;
+      if (btn.hidden) { liste.hidden = true; return; }
+      liste.innerHTML = lignes.map((e) => {
+        const val = e.etat === 'fait' ? '100 %' : e.etat === 'echec' ? 'échec' : `${Math.round(e.p * 100)} %`;
+        return `<li class="etape ${e.etat}">
+          <span class="puce" aria-hidden="true"></span>
+          <span class="nom">${esc(e.nom)}${e.sous ? `<small>${esc(e.sous)}</small>` : ''}</span>
+          <span class="bar"><div style="width:${e.etat === 'fait' ? 100 : Math.round(e.p * 100)}%"></div></span>
+          <span class="val">${val}</span>
+        </li>`;
+      }).join('');
+    },
   };
   carte.progression(0, texte);
   jobs.set(id, carte);
+  majCompteJobs();
   return carte;
 }
 
@@ -524,27 +668,22 @@ function retirerJob(id) {
   const c = jobs.get(id);
   if (c) c.el.remove();
   jobs.delete(id);
-  $('#jobs-wrap').hidden = !jobs.size;
+  majCompteJobs();
 }
 
-const ETAPES = {
-  'Préparation': 'Préparation du serveur…',
-  'Récupération de la prêche': 'Préparation du serveur…',
-  'Installation de Python': 'Installation des outils…',
-  'Cache du modèle Whisper': 'Installation des outils…',
-  'Installation des outils': 'Installation des outils…',
-  'Transcription, traduction et voix': 'écoute, traduction et voix',
-  'Enregistrement des résultats': 'Enregistrement des fichiers…',
-};
-
 // ---------- Estimation du temps restant ----------
-// Le temps de traduction dépend surtout de la longueur de la prêche, donc de la
-// taille du MP3. La page mesure les dernières traductions réussies pour connaître
-// le nombre de minutes par Mo, et s'en sert pour estimer les traductions en cours.
-const MINUTES_PAR_MO_DEFAUT = 2.6; // mesuré sur les premières prêches
-const PREPARATION_MIN = 3;         // démarrage du serveur et installation des outils
-let minutesParMo = null;
-let taillesEntrees = null; // id -> taille du MP3 envoyé (Mo)
+// La durée dépend surtout de la longueur de la prêche, donc de la taille du MP3.
+// Chaque étape a une durée attendue en minutes par Mo, recalculée à partir des
+// dernières traductions réussies (valeurs de départ mesurées sur les premières prêches).
+const ETAPES_PREPARATION = ['Set up job', 'Préparation', 'Récupération de la prêche', 'Installation de Python', 'Cache du modèle Whisper', 'Installation des outils'];
+const NOMS_LANGUES = { Chinois: 'zh', Espagnol: 'es', Russe: 'ru', Hindi: 'hi', Anglais: 'en', 'Français': 'fr' };
+const MIN_PAR_MO_DEFAUT = {
+  Transcription: 0.45, Chinois: 0.45, Espagnol: 0.45, Russe: 0.55, Hindi: 0.8, Anglais: 0.45, 'Français': 0.45,
+  'Transcription, traduction et voix': 2.6, // ancienne version du workflow, en une seule étape
+};
+const PREPARATION_MIN = 3, ENREGISTREMENT_MIN = 1, TAILLE_PAR_DEFAUT_MO = 35;
+let minParMo = null;        // nom d'étape -> minutes par Mo
+let taillesEntrees = null;  // id -> taille du MP3 envoyé (Mo)
 
 async function tailles() {
   if (taillesEntrees) return taillesEntrees;
@@ -558,33 +697,78 @@ async function tailles() {
   return taillesEntrees;
 }
 
+const minutes = (a, b) => (new Date(b) - new Date(a)) / 60000;
+const mediane = (l) => { const t = [...l].sort((x, y) => x - y); return t[Math.floor(t.length / 2)]; };
+
 async function calibrer(runs) {
-  if (minutesParMo) return minutesParMo;
-  minutesParMo = MINUTES_PAR_MO_DEFAUT;
+  if (minParMo) return;
+  minParMo = { ...MIN_PAR_MO_DEFAUT };
   try {
     const t = await tailles();
-    const ratios = [];
+    const mesures = {};
     for (const run of runs.filter((r) => r.conclusion === 'success').slice(0, 5)) {
-      const id = idDuRun(run), mo = t[id];
+      const mo = t[idDuRun(run)];
       if (!mo) continue;
       const { jobs: js } = await gh(repo(`/actions/runs/${run.id}/jobs`));
-      const etape = ((js[0] && js[0].steps) || []).find((s) => s.name === 'Transcription, traduction et voix');
-      if (!etape || !etape.started_at || !etape.completed_at) continue;
-      const minutes = (new Date(etape.completed_at) - new Date(etape.started_at)) / 60000;
-      // Une relance partielle (une seule langue, transcription déjà faite) fausserait la moyenne.
-      if (minutes / mo > 1) ratios.push(minutes / mo);
+      for (const e of (js[0] && js[0].steps) || []) {
+        if (!(e.name in MIN_PAR_MO_DEFAUT) || e.conclusion !== 'success' || !e.started_at || !e.completed_at) continue;
+        const r = minutes(e.started_at, e.completed_at) / mo;
+        if (r > 0.02) (mesures[e.name] ||= []).push(r); // une étape sautée (déjà faite) ne compte pas
+      }
     }
-    if (ratios.length) {
-      ratios.sort((x, y) => x - y);
-      minutesParMo = Math.min(6, Math.max(1, ratios[Math.floor(ratios.length / 2)]));
+    for (const [nom, l] of Object.entries(mesures)) {
+      minParMo[nom] = Math.min(MIN_PAR_MO_DEFAUT[nom] * 4, Math.max(MIN_PAR_MO_DEFAUT[nom] / 4, mediane(l)));
     }
   } catch (e) { console.warn(e); }
-  return minutesParMo;
 }
 
 function idDuRun(run) {
-  const m = (run.display_title || '').match(/entrees\/([^ ]+)\.[a-z0-9]+$/i);
+  const m = (run.display_title || '').match(/entrees\/([^ ]+?)\.[a-z0-9]+(?: |$)/i);
   return m && m[1];
+}
+function languesDuRun(run) {
+  const m = (run.display_title || '').match(/·\s*([a-z ]+)$/);
+  return m ? m[1].trim().split(/\s+/) : null;
+}
+
+// Regroupe les étapes GitHub en étapes lisibles et estime l'avancement de chacune.
+function analyserEtapes(steps, mo, langues, source) {
+  const maintenant = Date.now();
+  const groupes = [];
+  const prep = steps.filter((e) => ETAPES_PREPARATION.includes(e.name));
+  groupes.push({ nom: 'Préparation du serveur', steps: prep, attendu: PREPARATION_MIN });
+  for (const e of steps) {
+    if (!(e.name in MIN_PAR_MO_DEFAUT)) continue;
+    const code = NOMS_LANGUES[e.name];
+    if (code && langues && !langues.includes(code)) continue;
+    if (e.conclusion === 'skipped') continue;
+    groupes.push({
+      nom: e.name === 'Transcription' ? 'Transcription' : e.name,
+      sous: e.name === 'Transcription' ? (source || '') : code ? NATIF[code] : '',
+      steps: [e], attendu: mo * minParMo[e.name],
+    });
+  }
+  const enr = steps.filter((e) => e.name === 'Enregistrement des résultats');
+  if (enr.length) groupes.push({ nom: 'Enregistrement', steps: enr, attendu: ENREGISTREMENT_MIN });
+
+  let reste = 0, enCours = null;
+  const lignes = groupes.map((g) => {
+    const finis = g.steps.every((e) => e.status === 'completed');
+    const commence = g.steps.filter((e) => e.started_at && e.status !== 'pending' && e.status !== 'queued');
+    let etat = 'attente', p = 0;
+    if (g.steps.some((e) => e.conclusion === 'failure')) etat = 'echec';
+    else if (finis && g.steps.length) { etat = 'fait'; p = 1; }
+    else if (commence.length) {
+      etat = 'encours';
+      const debut = Math.min(...commence.map((e) => new Date(e.started_at)));
+      const ecoule = (maintenant - debut) / 60000;
+      p = Math.min(0.95, ecoule / g.attendu);
+      reste += Math.max(g.attendu - ecoule, g.attendu * 0.05);
+      enCours = enCours || g;
+    } else reste += g.attendu;
+    return { nom: g.nom, sous: g.sous, p, etat };
+  });
+  return { lignes, reste, enCours };
 }
 
 function duree(min) {
@@ -614,45 +798,26 @@ async function suivreTravaux() {
         actifs++;
         const carte = jobs.get(id) || ajouterJob(id, '');
         if (run.status === 'queued' || run.status === 'pending' || run.status === 'waiting') {
-          carte.temps('');
           carte.attente(run.status === 'queued' ? 'En file d\'attente chez GitHub…' : undefined);
           continue;
         }
         const { jobs: js } = await gh(repo(`/actions/runs/${run.id}/jobs`));
         const job = js[0] || {};
-        const steps = job.steps || [];
-        const enCours = steps.find((s) => s.status === 'in_progress');
-        const etape = (enCours && ETAPES[enCours.name]) || 'Traduction en cours…';
+        const mo = (await tailles())[id] || TAILLE_PAR_DEFAUT_MO;
+        const { lignes, reste, enCours } = analyserEtapes(job.steps || [], mo, languesDuRun(run));
         const debut = new Date(job.started_at || run.run_started_at || run.created_at);
         const ecoule = (Date.now() - debut) / 60000;
-        const mo = (await tailles())[id];
-
-        if (!mo) { // taille inconnue : pas d'estimation possible
-          carte.temps('');
-          carte.attente(etape);
-          continue;
-        }
-        const total = PREPARATION_MIN + mo * minutesParMo;
-        const enregistrement = enCours && enCours.name === 'Enregistrement des résultats';
-        const p = enregistrement ? 0.98 : Math.min(0.95, Math.max(0.02, ecoule / total));
-        const reste = total - ecoule;
-        if (enregistrement) {
-          carte.progression(p, 'Presque fini : enregistrement des fichiers…');
-          carte.temps('');
-        } else if (reste > 0) {
-          carte.progression(p, `${duree(reste)} restantes · ${etape.replace(/…$/, '').toLowerCase()}`);
-          carte.temps(`fin vers ${heure(new Date(debut.getTime() + total * 60000))}`);
-        } else {
-          carte.progression(p, 'Ça prend un peu plus longtemps que prévu, presque fini…');
-          carte.temps('');
-        }
+        const p = Math.min(0.97, Math.max(0.01, ecoule / (ecoule + reste)));
+        const etape = enCours ? (enCours.sous ? `${enCours.nom} (${enCours.sous})` : enCours.nom) : 'Traduction';
+        carte.progression(p, `${etape} · ${duree(reste)} restantes · fin vers ${heure(new Date(Date.now() + reste * 60000))}`);
+        carte.etapes(lignes);
       } else if (jobs.has(id) || new Date(run.updated_at) > depuis) {
         if (run.conclusion === 'success') {
           if (jobs.has(id)) { retirerJob(id); chargerBibliotheque(); }
         } else if (run.conclusion !== 'cancelled' && new Date(run.updated_at) > depuis) {
           const carte = jobs.get(id) || ajouterJob(id, '');
-          carte.temps('');
-          carte.erreur('La traduction a échoué.', run.html_url);
+          carte.erreur('La traduction a échoué (les langues réussies sont dans la bibliothèque).', run.html_url);
+          carte.etapes(null);
         }
       }
     }
@@ -699,18 +864,28 @@ function analyser(id) {
 }
 const titre = (id) => analyser(id).titre;
 const dateLongue = (d) => d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
+const dateCourte = (d) => d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' });
+
+function etatConnexion(ok, texte) {
+  const el = $('#connexion');
+  el.className = 'etat' + (ok === true ? ' ok' : ok === false ? ' err' : '');
+  el.textContent = texte;
+}
 
 async function chargerBibliotheque() {
   const lib = $('#library');
-  if (!cfg.token) { lib.innerHTML = '<div class="card empty">Connecte-toi dans les réglages pour voir tes prêches.</div>'; return; }
+  if (!cfg.token) { etatConnexion(null, 'Non connecté'); lib.innerHTML = '<div class="vide">Connecte-toi dans les réglages pour voir tes prêches.</div>'; $('#lib-count').textContent = ''; return; }
   let dossiers;
   try {
     dossiers = (await gh(repo(`/contents/resultats?ref=${BRANCH}`))).filter((d) => d.type === 'dir');
+    etatConnexion(true, 'Connecté à GitHub');
   } catch (e) {
-    if (e.status === 404) { lib.innerHTML = '<div class="card empty">Aucune prêche traduite pour le moment.</div>'; return; }
-    lib.innerHTML = `<div class="notice err">${esc(erreurLisible(e))}</div>`; return;
+    etatConnexion(e.status === 404 ? true : false, e.status === 404 ? 'Connecté à GitHub' : 'Problème de connexion');
+    if (e.status === 404) { lib.innerHTML = '<div class="vide">Aucune prêche traduite pour le moment.<br>Dépose un MP3 pour commencer.</div>'; return; }
+    lib.innerHTML = `<div class="panel-corps"><div class="notice err">${esc(erreurLisible(e))}</div></div>`; return;
   }
-  if (!dossiers.length) { lib.innerHTML = '<div class="card empty">Aucune prêche traduite pour le moment.</div>'; return; }
+  if (!dossiers.length) { lib.innerHTML = '<div class="vide">Aucune prêche traduite pour le moment.<br>Dépose un MP3 pour commencer.</div>'; return; }
+  $('#lib-count').textContent = String(dossiers.length);
 
   // Tri par date de la prêche (lue dans le titre), la plus récente en haut.
   // Les prêches sans date dans le titre vont à la fin, par date d'envoi.
@@ -718,14 +893,14 @@ async function chargerBibliotheque() {
   const t = (d) => (d ? d.getTime() : 0);
   preches.sort((a, b) => (!!b.date - !!a.date) || t(b.date) - t(a.date) || t(b.envoi) - t(a.envoi));
 
-  lib.innerHTML = `<div class="card liste-preches">${preches.map((p) => {
+  lib.innerHTML = `<div class="liste-preches">${preches.map((p) => {
     // Le nettoyage quotidien retire les prêches envoyées il y a plus de 30 jours (donc au 31e jour).
     const expire = p.envoi && new Date(p.envoi.getFullYear(), p.envoi.getMonth(), p.envoi.getDate() + CONSERVATION_JOURS + 1);
     return `<details class="preche" data-path="${esc(p.path)}" data-id="${esc(p.id)}">
       <summary>
-        <span class="preche-date">${p.date ? esc(dateLongue(p.date)) : '<span class="hint">Date inconnue</span>'}</span>
+        <span class="preche-date">${p.date ? esc(dateCourte(p.date)) : 'sans date'}</span>
         <span class="preche-titre">${esc(p.titre)}</span>
-        <svg class="chevron" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>
+        <svg class="chevron" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>
       </summary>
       <div class="preche-corps">
         <div class="langues"><span class="hint">Chargement…</span></div>
@@ -756,8 +931,8 @@ async function chargerLangues(details) {
         const { mp3, txt } = par[l];
         const nom = LANGS[l] || l.toUpperCase();
         return `<div class="lang">
-          <span class="badge">${l.toUpperCase()}</span>
-          <span>${esc(nom)}${mp3 ? '' : ' <span class="hint">(texte original)</span>'}</span>
+          <span class="code">${l}</span>
+          <span class="lang-nom">${esc(nom)}${NATIF[l] && NATIF[l] !== nom ? `<small>${NATIF[l]}</small>` : ''}${mp3 ? '' : ' <small>texte original</small>'}</span>
           <span class="lang-btns">
             ${mp3 ? `<button class="small" data-play="${esc(mp3.path)}">Écouter</button>
                      <button class="small" data-dl="${esc(mp3.path)}" data-name="${esc(mp3.name)}">Télécharger</button>` : ''}

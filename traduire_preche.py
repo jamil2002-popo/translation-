@@ -395,6 +395,8 @@ def main() -> int:
     p.add_argument("--voix", nargs="*", default=[], metavar="LANGUE=VOIX",
                    help="Changer une voix, ex. es=es-ES-AlvaroNeural")
     p.add_argument("--sortie", type=Path, default=None, help="Dossier de sortie")
+    p.add_argument("--transcription-seule", action="store_true",
+                   help="Faire seulement la transcription (les langues viendront ensuite)")
     args = p.parse_args()
 
     if not args.audio.exists():
@@ -418,6 +420,8 @@ def main() -> int:
         texte = transcrire(args.audio, args.modele, args.source)
         fichier_transcription.write_text(texte, encoding="utf-8")
         print(f"      → {fichier_transcription}")
+    if args.transcription_seule:
+        return 0
 
     echecs = []
     for langue in args.langues:
