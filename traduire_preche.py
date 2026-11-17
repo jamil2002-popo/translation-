@@ -349,7 +349,11 @@ def traduire(texte: str, source: str, langue: str, moteur: str) -> str:
 # Mots très courants en anglais, absents (ou rares) des autres langues cibles.
 MOTS_ANGLAIS = set("""the and that is you we they this was are with have not but what will your our their there
 who when because which from of to it he she his her him them be been would could should can do does
-did just about into than then if all my me us so very""".split()) - {"me", "so"}
+did just about into than then if all my me us so very these those has had were""".split()) - {"me", "so", "he"}
+# Petits mots très courants en espagnol, français et portugais : leur présence montre que la phrase est traduite.
+MOTS_LATINS = set("""el la los las de del que y en un una es por con para se lo su sus al como pero más
+le les des et est une du pour dans qui ne pas au aux sur ce cette nous vous il elle
+o os da do das dos em não uma""".split())
 
 
 def phrase_anglaise(phrase: str, langue: str) -> bool:
@@ -360,10 +364,12 @@ def phrase_anglaise(phrase: str, langue: str) -> bool:
     if langue in ("zh", "ru", "hi", "ar"):  # autres alphabets : beaucoup de lettres latines = anglais
         autres = sum(c.isalpha() and not c.isascii() for c in phrase)
         return latines >= 12 and latines > 2 * autres
-    mots = re.findall(r"[a-z']+", phrase.lower())
+    mots = re.findall(r"[a-záéíóúñàâçèêëîïôûùüœ']+", phrase.lower())
     if len(mots) < 5:
         return False
-    return sum(m in MOTS_ANGLAIS for m in mots) >= max(2, 0.25 * len(mots))
+    anglais = sum(m in MOTS_ANGLAIS for m in mots)
+    latins = sum(m in MOTS_LATINS for m in mots)
+    return anglais >= 2 and (latins == 0 or anglais >= max(3, 0.3 * len(mots)))
 
 
 def traduire_phrase(phrase: str, source: str, langue: str) -> str:
