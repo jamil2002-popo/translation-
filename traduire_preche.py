@@ -121,7 +121,7 @@ def traduire_gtx(texte: str, source: str, cible: str) -> str:
 
     url = "https://translate.googleapis.com/translate_a/single"
     resultat = []
-    for morceau in decouper(texte):
+    for morceau in decouper(texte, 2500):
         for essai in range(3):
             try:
                 r = requests.post(
@@ -346,6 +346,58 @@ def traduire(texte: str, source: str, langue: str, moteur: str) -> str:
     return "\n".join(resultat)
 
 
+# Mots très courants en anglais, absents (ou rares) des autres langues cibles.
+MOTS_ANGLAIS = set("""the and that is you we they this was are with have not but what will your our their there
+who when because which from of to it he she his her him them be been would could should can do does
+did just about into than then if all my me us so very""".split()) - {"me", "so"}
+
+
+def phrase_anglaise(phrase: str, langue: str) -> bool:
+    """La phrase est-elle restée en anglais dans une traduction vers `langue` ?"""
+    if langue == "en":
+        return False
+    latines = sum(c.isascii() and c.isalpha() for c in phrase)
+    if langue in ("zh", "ru", "hi", "ar"):  # autres alphabets : beaucoup de lettres latines = anglais
+        autres = sum(c.isalpha() and not c.isascii() for c in phrase)
+        return latines >= 12 and latines > 2 * autres
+    mots = re.findall(r"[a-z']+", phrase.lower())
+    if len(mots) < 5:
+        return False
+    return sum(m in MOTS_ANGLAIS for m in mots) >= max(2, 0.25 * len(mots))
+
+
+def traduire_phrase(phrase: str, source: str, langue: str) -> str:
+    """Retraduit une phrase seule (Google, sinon traduction locale)."""
+    try:
+        return traduire_gtx(phrase, source, LANGUES[langue][0])
+    except Exception as e:
+        print(f"      (Google indisponible pour la réparation : {str(e)[:80]})")
+        return traduire_nllb(phrase, source, langue)
+
+
+def reparer(traduction: str, source: str, langue: str) -> tuple[str, int]:
+    """Retraduit les phrases restées en anglais. Renvoie le texte et le nombre de phrases réparées."""
+    if langue == source:
+        return traduction, 0
+    # Découpe en gardant la ponctuation (le chinois n'a pas d'espace entre les phrases).
+    morceaux = re.split(r"(?<=[.!?。！？।])", traduction)
+    reparees = 0
+    for i, m in enumerate(morceaux):
+        if not phrase_anglaise(m, langue):
+            continue
+        debut = m[: len(m) - len(m.lstrip())]
+        try:
+            nouvelle = traduire_phrase(m.strip(), source, langue).strip()
+        except Exception as e:
+            print(f"      Phrase non réparée ({str(e)[:80]}) : {m.strip()[:60]}")
+            continue
+        if nouvelle and not phrase_anglaise(nouvelle, langue):
+            morceaux[i] = debut + nouvelle
+            reparees += 1
+        time.sleep(0.5)
+    return "".join(morceaux), reparees
+
+
 # --------------------------------------------------------------------------
 # 3. Synthèse vocale
 # --------------------------------------------------------------------------
@@ -491,6 +543,14 @@ def main() -> int:
                 traduction = traduire(texte, args.source, langue, args.moteur)
                 fichier_trad.write_text(traduction, encoding="utf-8")
                 print(f"      → {fichier_trad}")
+
+            # Vérification : les phrases restées en anglais sont retraduites une par une.
+            fichier_mp3 = dossier / f"{args.audio.stem}.{langue}.mp3"
+            traduction, n = reparer(traduction, args.source, langue)
+            if n:
+                fichier_trad.write_text(traduction, encoding="utf-8")
+                fichier_mp3.unlink(missing_ok=True)  # l'audio doit suivre le texte corrigé
+                print(f"      {n} phrase(s) restée(s) en anglais retraduite(s).")
 
             # 3. Voix (sautée si le MP3 existe déjà : supprime-le pour le refaire)
             fichier_mp3 = dossier / f"{args.audio.stem}.{langue}.mp3"
