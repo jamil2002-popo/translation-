@@ -179,10 +179,19 @@ jobs:
           path: preches
           fetch-depth: 1
 
+      # D'abord les textes de départ, puis les résultats de chaque langue, qui les
+      # remplacent : une traduction corrigée ne doit pas être écrasée par l'ancienne.
+      - name: Récupération des textes de départ
+        uses: actions/download-artifact@v4
+        with:
+          name: textes
+          path: recus
+
       - name: Récupération des résultats
         uses: actions/download-artifact@v4
         with:
-          path: recus
+          pattern: langue-*
+          path: recus-langues
           merge-multiple: true
 
       - name: Enregistrement des résultats
@@ -191,6 +200,7 @@ jobs:
           set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if [ -d ../recus-langues ]; then cp ../recus-langues/* ../recus/; fi
           ls -la ../recus
           # On repart toujours de la dernière version de la branche (une autre prêche
           # a pu finir, ou le nettoyage a pu compacter l'historique) et on y ajoute
