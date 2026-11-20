@@ -1,0 +1,5 @@
+sortie/
+__pycache__/
+.venv/
+*.mp3
+!exemples/*.mp3
