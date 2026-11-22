@@ -1,0 +1,16 @@
+{
+  "_aide": [
+    "Corrections appliquées à chaque prêche, langue par langue.",
+    "« traduction » : remplace un mot ou une expression mal traduits, dans le texte ET dans l'audio.",
+    "« prononciation » : remplace un mot seulement pour la voix (le texte reste correct).",
+    "   Exemple : un mot chinois mal prononcé peut être remplacé par un mot qui se prononce comme il faut.",
+    "Format : \"mot à remplacer\": \"remplacement\". Après une modification, relancer la traduction",
+    "avec l'option « refaire la voix » pour mettre à jour les prêches déjà traduites."
+  ],
+  "zh": { "traduction": {}, "prononciation": {} },
+  "es": { "traduction": {}, "prononciation": {} },
+  "ru": { "traduction": {}, "prononciation": {} },
+  "hi": { "traduction": {}, "prononciation": {} },
+  "en": { "traduction": {}, "prononciation": {} },
+  "fr": { "traduction": {}, "prononciation": {} }
+}

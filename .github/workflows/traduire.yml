@@ -20,6 +20,9 @@ on:
       modele:
         description: "Modèle Whisper (base, small, medium)"
         default: "small"
+      refaire:
+        description: "Refaire la voix des langues déjà terminées (oui/non), par ex. après une modification de corrections.json"
+        default: "non"
 
 # Les langues figurent dans le titre : la page s'en sert pour afficher le détail.
 run-name: "Traduction ${{ inputs.fichier }} · ${{ inputs.langues }}"
@@ -38,6 +41,7 @@ env:
   LANGUES: ${{ inputs.langues }}
   SOURCE: ${{ inputs.source }}
   MODELE: ${{ inputs.modele }}
+  REFAIRE: ${{ inputs.refaire || 'non' }}
   PYTHONUNBUFFERED: "1"
 
 jobs:
@@ -96,7 +100,8 @@ jobs:
           a_faire = []
           for code in os.environ["LANGUES"].split():
               mp3 = f"preches/resultats/{nom}/{nom}.{code}.mp3"
-              if code in noms and code != source and not (os.path.exists(mp3) and os.path.getsize(mp3) > 0):
+              deja_fait = os.path.exists(mp3) and os.path.getsize(mp3) > 0 and os.environ.get("REFAIRE") != "oui"
+              if code in noms and code != source and not deja_fait:
                   a_faire.append({"code": code, "nom": noms[code]})
           print(json.dumps(a_faire, ensure_ascii=False))
           PY

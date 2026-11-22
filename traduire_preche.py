@@ -243,10 +243,14 @@ def traduire_gemini(texte: str, source: str, cible_nom: str) -> str:
     except Exception as e:
         # Aucun modèle ne répond (quota épuisé, service saturé) : inutile de réessayer à chaque partie.
         raise QuotaEpuise(str(e)[:120]) from e
+    bible = BIBLES.get(cible_nom, "the standard Protestant Bible of that language")
     prompt = (
-        f"Translate this Christian sermon excerpt from '{source}' into "
-        f"{cible_nom}. Keep the tone of a preacher, translate Bible "
-        f"references using the standard Bible names of that language. "
+        f"Translate this Christian (Baptist) sermon excerpt from '{source}' into {cible_nom}. "
+        f"Keep the warm, spoken tone of a preacher. For Bible books, names, places and quoted "
+        f"verses, use the wording of {bible}. Write Bible references as book, chapter and verse "
+        f"the way a reader of that language would say them aloud. "
+        f"The text will be read aloud by a voice: output plain text only, with no Markdown, "
+        f"no asterisks, no bullet points, no headings and no notes. "
         f"Output only the translation, nothing else.\n\n{texte}"
     )
     for essai in range(4):
@@ -308,6 +312,18 @@ def traduire_nllb(texte: str, source: str, cible: str) -> str:
     print()
     return " ".join(resultat)
 
+
+# Bible de référence de chaque langue (pour les noms bibliques et les citations).
+BIBLES = {
+    "Simplified Chinese": "the Chinese Union Version (和合本)",
+    "Spanish": "the Reina-Valera 1960",
+    "Russian": "the Russian Synodal Bible (Синодальный перевод)",
+    "Hindi": "the Hindi O.V. Bible (पवित्र बाइबिल)",
+    "French": "the Louis Segond Bible",
+    "English": "the King James Version / ESV",
+    "Portuguese": "the Almeida Revista e Corrigida",
+    "Arabic": "the Smith & Van Dyke Bible",
+}
 
 NOMS_ANGLAIS = {"zh": "Simplified Chinese", "es": "Spanish", "ru": "Russian",
                 "hi": "Hindi", "en": "English", "fr": "French",
@@ -405,6 +421,82 @@ def reparer(traduction: str, source: str, langue: str) -> tuple[str, int]:
 
 
 # --------------------------------------------------------------------------
+# Nettoyage, corrections de la paroisse et préparation pour la voix
+# --------------------------------------------------------------------------
+def charger_corrections() -> dict:
+    """Lit corrections.json (à côté du programme). Vide si absent ou illisible."""
+    import json
+    chemin = Path(__file__).with_name("corrections.json")
+    try:
+        return json.loads(chemin.read_text(encoding="utf-8"))
+    except Exception:
+        return {}
+
+
+CORRECTIONS = charger_corrections()
+
+
+def nettoyer_traduction(texte: str, langue: str) -> str:
+    """Retire la mise en forme (Markdown, caractères invisibles) et applique les corrections de traduction."""
+    texte = re.sub(r"[\u200b\u200c\u200d\ufeff]", "", texte)
+    texte = re.sub(r"\*+|(?<!\w)_{1,2}|_{1,2}(?!\w)|`+|^#+\s*", "", texte, flags=re.M)
+    for mauvais, bon in CORRECTIONS.get(langue, {}).get("traduction", {}).items():
+        texte = texte.replace(mauvais, bon)
+    return texte
+
+
+# Références bibliques « 3:16 » ou « 3:16-18 », dites en toutes lettres dans chaque langue.
+FORMATS_VERSETS = {
+    "zh": ("第{c}章{v}节", "第{c}章{v}至{w}节"),
+    "es": ("capítulo {c}, versículo {v}", "capítulo {c}, versículos {v} al {w}"),
+    "ru": ("глава {c}, стих {v}", "глава {c}, стихи с {v} по {w}"),
+    "hi": ("अध्याय {c}, पद {v}", "अध्याय {c}, पद {v} से {w}"),
+    "fr": ("chapitre {c}, verset {v}", "chapitre {c}, versets {v} à {w}"),
+    "en": ("chapter {c}, verse {v}", "chapter {c}, verses {v} to {w}"),
+    "pt": ("capítulo {c}, versículo {v}", "capítulo {c}, versículos {v} a {w}"),
+    "ar": ("الأصحاح {c}، الآية {v}", "الأصحاح {c}، الآيات {v} إلى {w}"),
+}
+
+
+def preparer_pour_voix(texte: str, langue: str) -> str:
+    """Texte tel qu'il doit être lu : aucun symbole prononcé, références bibliques en toutes lettres."""
+    texte = nettoyer_traduction(texte, langue)
+    un, plage = FORMATS_VERSETS.get(langue, FORMATS_VERSETS["en"])
+
+    def verset(m):
+        c, v, w = m.group(1), m.group(2), m.group(3)
+        if w and int(w) > int(v):
+            return plage.format(c=c, v=v, w=w)
+        return un.format(c=c, v=v)
+
+    sep = "" if langue == "zh" else " "
+    texte = re.sub(r"(?<![\d:])(\d{1,3})\s*[:：]\s*(\d{1,3})(?:\s*[-–—:]\s*(\d{1,3}))?(?![\d:])",
+                   lambda m: sep + verset(m) + sep, texte)
+    # Symboles que les voix lisent à voix haute
+    texte = texte.replace("…", ".").replace("...", ".")
+    texte = re.sub(r"[/\\|<>\[\]{}~^=+#@]", " ", texte)
+    texte = re.sub(r"\s[-–—]+\s|—|–", ", ", texte)
+    texte = re.sub(r"[\"“”«»„‟《》「」『』]", "", texte)
+    if langue == "zh":
+        texte = re.sub(r"[‘’]", "", texte)
+    texte = re.sub(r"[()（）]", ", ", texte)
+    if langue == "zh":
+        # Ponctuation occidentale au milieu du chinois : la version chinoise est lue comme une pause.
+        for a, b in ((",", "，"), (".", "。"), (":", "："), (";", "；"), ("?", "？"), ("!", "！")):
+            texte = re.sub(rf"(?<=[\u3400-\u9fff，。]){re.escape(a)}|{re.escape(a)}(?=[\u3400-\u9fff])", b, texte)
+        texte = re.sub(r"\s*,\s*", "，", texte)  # virgules ajoutées ci-dessus (tirets, parenthèses)
+        texte = texte.replace("．", "。")
+        texte = re.sub(r"\s*，\s*(?=[，。！？：；])|(?<=[，。！？：；])\s*，", "", texte)
+    for mot, dit in CORRECTIONS.get(langue, {}).get("prononciation", {}).items():
+        texte = texte.replace(mot, dit)
+    texte = re.sub(r"(,\s*){2,}", ", ", texte)
+    texte = re.sub(r"\s+([,.;:?!])", r"\1", texte)  # pas d'espace avant la ponctuation
+    texte = re.sub(r",\s*([.?!])", r"\1", texte)
+    texte = re.sub(r"[ \t]{2,}", " ", texte)
+    return texte
+
+
+# --------------------------------------------------------------------------
 # 3. Synthèse vocale
 # --------------------------------------------------------------------------
 # Voix de secours si la voix choisie ne répond pas (Microsoft en retire parfois).
@@ -456,7 +548,7 @@ async def lire_a_voix_haute(texte: str, langue: str, preferee: str, sortie: Path
     réessayé plusieurs fois, puis lu par une voix de secours si besoin."""
     voix = await voix_candidates(langue, preferee)
     print(f"[3/3] Voix {voix[0]}…")
-    morceaux = decouper(texte, 1500)
+    morceaux = decouper(preparer_pour_voix(texte, langue), 1500)
     secours = 0
     # On écrit dans un fichier temporaire, renommé seulement une fois complet :
     # un arrêt en plein milieu ne laisse jamais un MP3 à moitié fait.
@@ -550,8 +642,16 @@ def main() -> int:
                 fichier_trad.write_text(traduction, encoding="utf-8")
                 print(f"      → {fichier_trad}")
 
-            # Vérification : les phrases restées en anglais sont retraduites une par une.
+            # Mise en forme retirée et corrections de la paroisse (corrections.json).
             fichier_mp3 = dossier / f"{args.audio.stem}.{langue}.mp3"
+            propre = nettoyer_traduction(traduction, langue)
+            if propre != traduction:
+                traduction = propre
+                fichier_trad.write_text(traduction, encoding="utf-8")
+                fichier_mp3.unlink(missing_ok=True)
+                print("      Texte nettoyé (mise en forme, corrections).")
+
+            # Vérification : les phrases restées en anglais sont retraduites une par une.
             traduction, n = reparer(traduction, args.source, langue)
             if n:
                 fichier_trad.write_text(traduction, encoding="utf-8")
