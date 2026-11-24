@@ -28,9 +28,13 @@ Tu déposes ton MP3 dans une page web. GitHub fait tout le travail gratuitement 
 
 **À chaque prêche :** glisse un ou plusieurs MP3 dans la page et clique sur **Traduire**. Les fichiers sont envoyés un par un, puis traduits en parallèle sur GitHub. Compte environ 1 h 30 pour 45 minutes de prêche ; la page affiche le temps restant estimé. Tu peux fermer la page et revenir plus tard.
 
+Formats acceptés : MP3, MPEG (audio ou vidéo, seule la piste audio est utilisée), M4A, WAV, OGG.
+
+**Compresser des MP3 :** la section « Compresser des MP3 » de la page est indépendante de la traduction. Dépose un ou plusieurs fichiers MP3 ou MPEG, choisis la taille du résultat, puis clique sur **Compresser**. Le workflow `compresser.yml` les convertit avec ffmpeg en MP3 plus léger : 64 kb/s mono par défaut, soit environ 29 Mo par heure. Ça prend 1 à 3 minutes par fichier. Les fichiers compressés apparaissent sous le bouton, prêts à écouter ou télécharger.
+
 **Suppression automatique :** chaque jour, le workflow `nettoyage.yml` supprime les prêches envoyées il y a plus de 30 jours (MP3 reçus et traductions), puis compacte l'historique de la branche pour que GitHub libère vraiment la place. La page indique la date de suppression de chaque prêche. Pour changer la durée, modifie `30` dans `.github/workflows/nettoyage.yml` et `CONSERVATION_JOURS` dans `index.html`.
 
-Les fichiers sont rangés sur la branche `preches` du repo (`entrees/` pour les MP3 reçus, `resultats/` pour les traductions). Le plan gratuit de GitHub donne 2000 minutes de calcul par mois sur un repo privé, soit environ 60 à 100 prêches.
+Les fichiers sont rangés sur la branche `preches` du repo (`entrees/` pour les MP3 reçus, `resultats/` pour les traductions, `compression/` pour les fichiers compressés, supprimés eux aussi après 30 jours). Le plan gratuit de GitHub donne 2000 minutes de calcul par mois sur un repo privé, soit environ 60 à 100 prêches.
 
 Pour une meilleure traduction avec Gemini, ajoute ta clé gratuite comme secret `GEMINI_API_KEY` dans *Settings → Secrets and variables → Actions*. Le workflow l'utilise alors automatiquement.
 
