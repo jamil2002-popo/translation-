@@ -217,10 +217,15 @@ def modele_gemini(client) -> str:
         if version(nom) is not None and "generateContent" in (m.supported_actions or []):
             noms.append(nom)
     noms.sort(key=version, reverse=True)
+    # Test court (30 s) : un modèle qui ne répond pas à une phrase ne doit pas
+    # bloquer la traduction 3 minutes avant qu'on passe au suivant.
+    from google import genai
+    from google.genai import types
+    rapide = genai.Client(api_key=os.environ["GEMINI_API_KEY"], http_options=types.HttpOptions(timeout=30_000))
     for nom in noms:
         debut = time.time()
         try:
-            _gemini(client, nom, "Translate to Spanish, output only the translation: God is love.")
+            _gemini(rapide, nom, "Translate to Spanish, output only the translation: God is love.")
         except Exception as e:
             print(f"      ({nom} indisponible : {str(e)[:80]})")
             continue
