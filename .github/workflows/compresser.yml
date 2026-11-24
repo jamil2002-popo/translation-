@@ -1,0 +1,89 @@
+name: Compresser un MP3
+
+# Lancé par index.html (section « Compresser des MP3 »).
+# Reçoit un fichier audio (MP3, MPEG, M4A, WAV…) envoyé en morceaux sur la
+# branche preches, le convertit en MP3 plus léger avec ffmpeg, puis range le
+# résultat dans compression/<id>.mp3 (supprimé automatiquement après 30 jours).
+on:
+  workflow_dispatch:
+    inputs:
+      fichier:
+        description: "Chemin du fichier sur la branche preches (ex. compression/2026-11-24_1030_ma-preche.mpeg)"
+        required: true
+      qualite:
+        description: "voix (64 kb/s mono), petit (48 kb/s mono), minuscule (32 kb/s mono) ou musique (128 kb/s stéréo)"
+        default: "voix"
+
+run-name: "Compression ${{ inputs.fichier }} · ${{ inputs.qualite }}"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: compression-${{ inputs.fichier }}
+  cancel-in-progress: false
+
+env:
+  FICHIER: ${{ inputs.fichier }}
+  QUALITE: ${{ inputs.qualite || 'voix' }}
+
+jobs:
+  compresser:
+    name: Compression
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Récupération du fichier
+        uses: actions/checkout@v4
+        with:
+          ref: preches
+          fetch-depth: 1
+
+      - name: Installation de ffmpeg
+        run: |
+          pip install --quiet imageio-ffmpeg
+          echo "FFMPEG=$(python3 -c 'import imageio_ffmpeg; print(imageio_ffmpeg.get_ffmpeg_exe())')" >> "$GITHUB_ENV"
+
+      - name: Compression
+        run: |
+          set -euo pipefail
+          case "$FICHIER" in compression/*) ;; *) echo "Chemin invalide : $FICHIER"; exit 1;; esac
+          ID="$(basename "$FICHIER")"; ID="${ID%%.*}"
+          echo "ID=$ID" >> "$GITHUB_ENV"
+          mkdir -p ../travail
+          # La page envoie le fichier en morceaux (.part000, .part001…) : on les recolle.
+          cat "$FICHIER".part* > "../travail/entree"
+          case "$QUALITE" in
+            petit)     REGLAGES="-ac 1 -ar 32000 -b:a 48k" ;;
+            minuscule) REGLAGES="-ac 1 -ar 22050 -b:a 32k" ;;
+            musique)   REGLAGES="-ac 2 -ar 44100 -b:a 128k" ;;
+            *)         REGLAGES="-ac 1 -ar 44100 -b:a 64k" ;;
+          esac
+          # -map 0:a:0 : seulement la piste audio (une vidéo MPEG donne donc un MP3).
+          "$FFMPEG" -hide_banner -nostdin -y -i ../travail/entree -map 0:a:0 -map_metadata 0 \
+            $REGLAGES -c:a libmp3lame -id3v2_version 3 ../travail/sortie.mp3
+          AVANT=$(stat -c %s ../travail/entree); APRES=$(stat -c %s ../travail/sortie.mp3)
+          echo "Avant : $AVANT octets — après : $APRES octets"
+          # Si l'original était déjà un MP3 plus léger, on le garde tel quel.
+          if [ "$APRES" -ge "$AVANT" ] && "$FFMPEG" -hide_banner -i ../travail/entree 2>&1 | grep -q "Audio: mp3"; then
+            echo "Le fichier était déjà plus léger : on garde l'original."
+            cp ../travail/entree ../travail/sortie.mp3
+          fi
+
+      - name: Enregistrement
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          for i in 1 2 3 4 5 6; do
+            git fetch --depth=1 origin +refs/heads/preches:refs/remotes/origin/preches
+            git checkout -q -f -B enregistrement origin/preches
+            # Le fichier compressé remplace les morceaux reçus.
+            git rm -q --ignore-unmatch "$FICHIER".part*
+            cp ../travail/sortie.mp3 "compression/$ID.mp3"
+            git add -f "compression/$ID.mp3"  # -f : le .gitignore ignore les *.mp3
+            git commit -q -m "Compression : $FICHIER"
+            git push origin HEAD:preches && exit 0
+            sleep $((i * 5 + RANDOM % 10))
+          done
+          exit 1

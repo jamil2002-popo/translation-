@@ -97,7 +97,6 @@
   .colonne { display: grid; gap: 20px; min-width: 0; }
   @media (min-width: 900px) {
     .grille { grid-template-columns: 360px minmax(0, 1fr); }
-    .envoi { position: sticky; top: 20px; }
   }
 
   .panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); min-width: 0; }
@@ -152,6 +151,22 @@
   .liste .taille { font-family: var(--font-mono); font-size: 12px; color: var(--muted); }
   .liste button.link { text-decoration: none; font-size: 15px; padding: 2px 4px; }
   .liste button.link:hover { color: var(--err); }
+
+  /* Compression */
+  .drop.compact { padding: 20px 16px; }
+  .compresses { list-style: none; margin: 0; padding: 0; }
+  .compresses:empty { display: none; }
+  .compresses li { display: grid; gap: 6px; padding: 12px 0; border-top: 1px solid var(--line); }
+  .compresses li:first-child { border-top: none; padding-top: 0; }
+  .compresses .c-nom { font-size: 14px; font-weight: 500; overflow-wrap: anywhere; }
+  .compresses .c-info { font-family: var(--font-mono); font-size: 12px; color: var(--muted); }
+  .compresses .c-info .gain { color: var(--ok); }
+  .compresses .c-info.err { color: var(--err); font-family: inherit; font-size: 13px; }
+  .compresses .c-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .compresses audio { width: 100%; height: 36px; }
+  .compresses .bar { margin-top: 2px; }
+  .bar.indefini > div { width: 35% !important; animation: va-et-vient 1.4s ease-in-out infinite; }
+  @keyframes va-et-vient { 0% { margin-left: 0; } 50% { margin-left: 65%; } 100% { margin-left: 0; } }
 
   /* Choix de la langue source : contrôle segmenté */
   .segment { display: grid; grid-template-columns: 1fr 1fr; border: 1px solid var(--line); border-radius: 8px; padding: 3px; background: var(--surface-2); }
@@ -329,6 +344,7 @@
   </section>
 
   <div class="grille">
+    <div class="colonne">
     <!-- Envoi -->
     <section id="upload" class="panel envoi" aria-labelledby="t-envoi">
       <div class="panel-tete"><h2 id="t-envoi" data-i18n="nouvelle">Nouvelle traduction</h2></div>
@@ -338,8 +354,8 @@
             <path d="M12 16V4M7 9l5-5 5 5"/><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/>
           </svg>
           <strong id="drop-title" data-i18n="drop_titre">Dépose tes MP3 ici</strong>
-          <span id="drop-sub" class="hint" data-i18n="drop_sub">ou clique pour choisir des fichiers (MP3, M4A, WAV — 500 Mo max chacun)</span>
-          <input id="file" type="file" accept="audio/*,.mp3,.m4a,.wav,.ogg" multiple hidden>
+          <span id="drop-sub" class="hint" data-i18n="drop_sub">ou clique pour choisir des fichiers (MP3, MPEG, M4A, WAV — 500 Mo max chacun)</span>
+          <input id="file" type="file" accept="audio/*,video/mpeg,.mp3,.mpeg,.mpg,.mpga,.mp2,.m4a,.wav,.ogg" multiple hidden>
         </div>
         <ul id="liste" class="liste"></ul>
 
@@ -373,6 +389,39 @@
       </div>
     </section>
 
+    <!-- Compression de MP3 (indépendante de la traduction) -->
+    <section id="compression" class="panel" aria-labelledby="t-compression">
+      <div class="panel-tete"><h2 id="t-compression" data-i18n="c_titre">Compresser des MP3</h2></div>
+      <div class="panel-corps">
+        <div id="drop-c" class="drop compact" tabindex="0" role="button" aria-label="Choisir des fichiers à compresser">
+          <svg class="icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M4 14h6v6M20 10h-6V4M14 10l7-7M3 21l7-7"/>
+          </svg>
+          <strong id="drop-c-titre" data-i18n="c_drop_titre">Dépose des MP3 ou MPEG à compresser</strong>
+          <span id="drop-c-sub" class="hint" data-i18n="c_drop_sub">ou clique pour choisir (500 Mo max chacun)</span>
+          <input id="file-c" type="file" accept="audio/*,video/mpeg,.mp3,.mpeg,.mpg,.mpga,.mp2,.m4a,.wav,.ogg" multiple hidden>
+        </div>
+        <ul id="liste-c" class="liste"></ul>
+        <div class="champ">
+          <label class="etiquette" for="qualite-c" data-i18n="c_qualite">Taille du résultat</label>
+          <select id="qualite-c">
+            <option value="voix" selected data-i18n="c_q_voix">Normale, pour la voix (64 kb/s)</option>
+            <option value="petit" data-i18n="c_q_petit">Petite (48 kb/s)</option>
+            <option value="minuscule" data-i18n="c_q_minuscule">Très petite (32 kb/s)</option>
+            <option value="musique" data-i18n="c_q_musique">Musique, stéréo (128 kb/s)</option>
+          </select>
+          <span id="taille-c" class="hint"></span>
+        </div>
+        <div class="champ">
+          <button id="btn-c" class="primary" type="button" disabled data-i18n="c_bouton">Compresser</button>
+          <span class="hint" data-i18n="c_aide">Le résultat est toujours un MP3. Compte 1 à 3 minutes par fichier une fois l'envoi terminé.</span>
+        </div>
+        <div id="c-msg"></div>
+        <ul id="compresses" class="compresses"></ul>
+      </div>
+    </section>
+    </div>
+
     <div class="colonne">
       <!-- Traductions en cours -->
       <section id="jobs-wrap" class="panel" hidden aria-labelledby="t-jobs">
@@ -403,7 +452,7 @@ const TEXTES = {
     cle: "Clé d'accès GitHub", cle_locale: 'La clé reste uniquement dans ce navigateur, sur cet ordinateur.',
     enregistrer: 'Enregistrer', verification: 'Vérification…', connecte_ok: 'Connecté ✓',
     nouvelle: 'Nouvelle traduction', drop_titre: 'Dépose tes MP3 ici',
-    drop_sub: 'ou clique pour choisir des fichiers (MP3, M4A, WAV — 500 Mo max chacun)',
+    drop_sub: 'ou clique pour choisir des fichiers (MP3, MPEG, M4A, WAV — 500 Mo max chacun)',
     drop_n1: '1 prêche prête', drop_n: '{n} prêches prêtes', drop_plus: "clique ou dépose d'autres fichiers pour en ajouter",
     mo: 'Mo', retirer: 'Retirer', langue_preche: 'Langue de la prêche', traduire_en: 'Traduire en',
     qualite: 'Qualité de la transcription', q_base: 'Rapide', q_small: 'Normale (recommandée)', q_medium: 'Précise (2 à 3 fois plus lent)',
@@ -429,6 +478,16 @@ const TEXTES = {
     err401: "Clé d'accès invalide ou expirée. Vérifie-la dans les réglages.",
     err403: "La clé n'a pas les bonnes permissions (Actions et Contents en « Read and write »).",
     err404: 'Repo introuvable, ou la clé ne donne pas accès à ce repo.', err_net: 'Pas de connexion internet ?',
+    c_titre: 'Compresser des MP3', c_drop_titre: 'Dépose des MP3 ou MPEG à compresser', c_drop_sub: 'ou clique pour choisir (500 Mo max chacun)',
+    c_drop_n1: '1 fichier prêt', c_drop_n: '{n} fichiers prêts', c_qualite: 'Taille du résultat',
+    c_q_voix: 'Normale, pour la voix (64 kb/s)', c_q_petit: 'Petite (48 kb/s)',
+    c_q_minuscule: 'Très petite (32 kb/s)', c_q_musique: 'Musique, stéréo (128 kb/s)',
+    c_taille_h: 'Pour 1 heure d’audio : environ {mo} Mo.',
+    c_bouton: 'Compresser', c_bouton_n: 'Compresser les {n} fichiers',
+    c_aide: "Le résultat est toujours un MP3. Compte 1 à 3 minutes par fichier une fois l'envoi terminé.",
+    c_envoi: 'Envoi de « {nom} »… {p} %', c_envoyes: '{ok} fichier(s) sur {n} envoyé(s). La compression continue sur GitHub, même si tu fermes la page.',
+    c_attente: "En attente d'un serveur GitHub…", c_en_cours: 'Compression en cours…', c_echec: 'La compression a échoué. Supprime-le et renvoie le fichier.',
+    c_supprime_le: 'supprimé le {d}', c_confirmer: 'Supprimer « {t} » ?',
     l_zh: 'Chinois', l_es: 'Espagnol', l_ru: 'Russe', l_hi: 'Hindi', l_en: 'Anglais', l_fr: 'Français', l_pt: 'Portugais', l_ar: 'Arabe',
   },
   en: {
@@ -441,7 +500,7 @@ const TEXTES = {
     cle: 'GitHub access token', cle_locale: 'The token stays only in this browser, on this computer.',
     enregistrer: 'Save', verification: 'Checking…', connecte_ok: 'Connected ✓',
     nouvelle: 'New translation', drop_titre: 'Drop your MP3 files here',
-    drop_sub: 'or click to choose files (MP3, M4A, WAV — 500 MB max each)',
+    drop_sub: 'or click to choose files (MP3, MPEG, M4A, WAV — 500 MB max each)',
     drop_n1: '1 sermon ready', drop_n: '{n} sermons ready', drop_plus: 'click or drop more files to add them',
     mo: 'MB', retirer: 'Remove', langue_preche: 'Sermon language', traduire_en: 'Translate into',
     qualite: 'Transcription quality', q_base: 'Fast', q_small: 'Normal (recommended)', q_medium: 'Accurate (2 to 3 times slower)',
@@ -467,6 +526,16 @@ const TEXTES = {
     err401: 'Invalid or expired access token. Check it in Settings.',
     err403: 'The token is missing permissions (Actions and Contents set to “Read and write”).',
     err404: 'Repo not found, or the token has no access to it.', err_net: 'No internet connection?',
+    c_titre: 'Compress MP3', c_drop_titre: 'Drop MP3 or MPEG files to compress', c_drop_sub: 'or click to choose (500 MB max each)',
+    c_drop_n1: '1 file ready', c_drop_n: '{n} files ready', c_qualite: 'Output size',
+    c_q_voix: 'Normal, for speech (64 kbps)', c_q_petit: 'Small (48 kbps)',
+    c_q_minuscule: 'Very small (32 kbps)', c_q_musique: 'Music, stereo (128 kbps)',
+    c_taille_h: 'For 1 hour of audio: about {mo} MB.',
+    c_bouton: 'Compress', c_bouton_n: 'Compress {n} files',
+    c_aide: 'The result is always an MP3. Allow 1 to 3 minutes per file once the upload is done.',
+    c_envoi: 'Uploading “{nom}”… {p}%', c_envoyes: '{ok} of {n} file(s) uploaded. Compression continues on GitHub, even if you close the page.',
+    c_attente: 'Waiting for a GitHub server…', c_en_cours: 'Compressing…', c_echec: 'Compression failed. Delete it and upload the file again.',
+    c_supprime_le: 'deleted on {d}', c_confirmer: 'Delete “{t}”?',
     l_zh: 'Chinese', l_es: 'Spanish', l_ru: 'Russian', l_hi: 'Hindi', l_en: 'English', l_fr: 'French', l_pt: 'Portuguese', l_ar: 'Arabic',
   },
 };
@@ -632,10 +701,14 @@ function dessinerFichiers() {
   majBouton();
 }
 
+// MP3, MPEG (audio ou vidéo : seule la piste audio est utilisée), M4A, WAV…
+const RE_AUDIO = /\.(mp3|mpeg|mpg|mpga|mp2|m4a|wav|ogg|aac|flac|mp4)$/i;
+const estAudio = (f) => /^(audio\/|video\/mpeg)/.test(f.type) || RE_AUDIO.test(f.name);
+
 function ajouterFichiers(liste) {
   const refuses = [];
   for (const f of liste) {
-    if (!/^audio\//.test(f.type) && !/\.(mp3|m4a|wav|ogg|aac|flac|mp4)$/i.test(f.name)) { refuses.push(`${f.name} (${t('pas_audio')})`); continue; }
+    if (!estAudio(f)) { refuses.push(`${f.name} (${t('pas_audio')})`); continue; }
     if (f.size > MAX_MO * 1024 * 1024) { refuses.push(`${f.name} (${t('trop_gros', { mo: (f.size / 1048576).toFixed(0), max: MAX_MO })})`); continue; }
     if (fichiers.some((x) => x.name === f.name && x.size === f.size)) continue; // déjà dans la liste
     fichiers.push(f);
@@ -1255,6 +1328,7 @@ $('#btn-save').onclick = async () => {
     setTimeout(() => { $('#settings').hidden = true; msg.textContent = ''; }, 900);
     chargerBibliotheque();
     suivreTravaux();
+    chargerCompresses();
   } catch (e) {
     msg.className = 'status err'; msg.textContent = erreurLisible(e);
   }
@@ -1275,6 +1349,202 @@ $('#liste').addEventListener('click', (e) => {
 document.querySelectorAll('input[name=source]').forEach((r) => (r.onchange = dessinerCibles));
 $('#cibles').addEventListener('change', majBouton);
 $('#btn-go').onclick = lancer;
+
+// ---------- Compression de MP3 ----------
+// Les fichiers sont envoyés en morceaux dans compression/ sur la branche preches ;
+// le workflow compresser.yml les convertit en compression/<id>.mp3.
+const WORKFLOW_C = 'compresser.yml';
+let fichiersC = [];
+let envoiC = false;
+let compressionTimer = null;
+
+function dessinerFichiersC() {
+  $('#drop-c').classList.toggle('has-file', fichiersC.length > 0);
+  $('#drop-c-titre').textContent = !fichiersC.length ? t('c_drop_titre')
+    : fichiersC.length === 1 ? t('c_drop_n1') : t('c_drop_n', { n: fichiersC.length });
+  $('#drop-c-sub').textContent = fichiersC.length ? t('drop_plus') : t('c_drop_sub');
+  $('#liste-c').innerHTML = fichiersC.map((f, i) => `
+    <li><span class="nom">${esc(f.name)}</span><span class="taille">${(f.size / 1048576).toFixed(1)} ${t('mo')}</span>
+    <button class="link" data-retirer="${i}" title="${t('retirer')}" aria-label="${t('retirer')} ${esc(f.name)}">✕</button></li>`).join('');
+  const btn = $('#btn-c');
+  btn.disabled = envoiC || !fichiersC.length;
+  btn.textContent = envoiC ? t('envoi_en_cours') : fichiersC.length > 1 ? t('c_bouton_n', { n: fichiersC.length }) : t('c_bouton');
+}
+
+function ajouterFichiersC(liste) {
+  const refuses = [];
+  for (const f of liste) {
+    if (!estAudio(f)) { refuses.push(`${f.name} (${t('pas_audio')})`); continue; }
+    if (f.size > MAX_MO * 1024 * 1024) { refuses.push(`${f.name} (${t('trop_gros', { mo: (f.size / 1048576).toFixed(0), max: MAX_MO })})`); continue; }
+    if (fichiersC.some((x) => x.name === f.name && x.size === f.size)) continue;
+    fichiersC.push(f);
+  }
+  message('#c-msg', 'err', refuses.length ? t('ignores', { l: refuses.join(', ') }) : '');
+  dessinerFichiersC();
+}
+
+async function lancerCompression() {
+  if (!cfg.token) { ouvrirReglages(); return; }
+  const qualite = $('#qualite-c').value;
+  const aEnvoyer = fichiersC;
+  fichiersC = [];
+  envoiC = true;
+  dessinerFichiersC();
+  const pris = new Set();
+  let ok = 0;
+  for (const f of aEnvoyer) {
+    let id = identifiant(f.name), n = 2;
+    while (pris.has(id)) id = `${identifiant(f.name)}-${n++}`;
+    pris.add(id);
+    const ext = (f.name.match(/\.[a-zA-Z0-9]+$/) || ['.mp3'])[0].toLowerCase();
+    const chemin = `compression/${id}${ext}`;
+    try {
+      const nb = Math.ceil(f.size / MORCEAU) || 1;
+      const parties = [];
+      for (let i = 0; i < nb; i++) {
+        const b64 = await lireBase64(f.slice(i * MORCEAU, (i + 1) * MORCEAU));
+        const blob = await envoyerBlob(b64, (p) => {
+          message('#c-msg', 'ok', t('c_envoi', { nom: f.name, p: Math.round(((i + p) / nb) * 100) }));
+        });
+        parties.push({ path: `${chemin}.part${String(i).padStart(3, '0')}`, sha: blob.sha });
+      }
+      const nom = await post('/git/blobs', { content: f.name, encoding: 'utf-8' });
+      parties.push({ path: `compression/${id}.nom.txt`, sha: nom.sha });
+      // Taille d'origine, encodée dans le nom (comme la durée des prêches).
+      parties.push({ path: `compression/${id}.avant-${f.size}.txt`, sha: nom.sha });
+      await commit(parties, `À compresser : ${f.name}`);
+      await post(`/actions/workflows/${WORKFLOW_C}/dispatches`, { ref: 'main', inputs: { fichier: chemin, qualite } });
+      ok++;
+      chargerCompresses();
+    } catch (e) {
+      message('#c-msg', 'err', `${f.name} : ${erreurLisible(e)}`);
+    }
+  }
+  envoiC = false;
+  dessinerFichiersC();
+  if (ok) message('#c-msg', ok === aEnvoyer.length ? 'ok' : 'err', t('c_envoyes', { ok, n: aEnvoyer.length }));
+  setTimeout(chargerCompresses, 5000);
+}
+
+const mo = (octets) => `${(octets / 1048576).toFixed(1)} ${t('mo')}`;
+
+async function chargerCompresses() {
+  clearTimeout(compressionTimer);
+  if (!cfg.token) return;
+  let liste = [];
+  try { liste = await gh(repo(`/contents/compression?ref=${BRANCH}`)); } catch (e) { if (e.status !== 404) return; }
+  // Regroupe les fichiers par identifiant (tout ce qui précède le premier point).
+  const par = new Map();
+  for (const f of liste) {
+    const i = f.name.indexOf('.');
+    if (i < 1) continue;
+    const id = f.name.slice(0, i), reste = f.name.slice(i + 1);
+    const e = par.get(id) || { id, parties: 0 };
+    par.set(id, e);
+    let m;
+    if (reste === 'mp3') e.mp3 = f;
+    else if (reste === 'nom.txt') e.nomTxt = f;
+    else if ((m = reste.match(/^avant-(\d+)\.txt$/))) e.avant = +m[1];
+    else if (/\.part\d+$/.test(reste)) e.parties++;
+  }
+  const items = [...par.values()].filter((e) => e.mp3 || e.parties).sort((a, b) => b.id.localeCompare(a.id));
+
+  // État des compressions pas encore terminées, d'après les runs GitHub.
+  let runs = [];
+  if (items.some((e) => !e.mp3)) {
+    try { runs = (await gh(repo(`/actions/workflows/${WORKFLOW_C}/runs?per_page=30`))).workflow_runs; } catch {}
+  }
+  const runDe = (id) => runs.find((r) => (r.display_title || '').includes(`compression/${id}.`));
+
+  for (const e of items) {
+    if (!e.nom && e.nomTxt) {
+      try { e.nom = (await (await gh(repo(`/contents/${encodeURI(e.nomTxt.path)}?ref=${BRANCH}`), { headers: { Accept: 'application/vnd.github.raw' } })).text()).trim(); } catch {}
+    }
+    if (!e.nom) e.nom = titre(e.id);
+  }
+
+  let attente = false;
+  $('#compresses').innerHTML = items.map((e) => {
+    const m = e.id.match(/^(\d{4})-(\d{2})-(\d{2})_/);
+    const expire = m && new Date(+m[1], +m[2] - 1, +m[3] + CONSERVATION_JOURS + 1);
+    const base = esc(e.nom.replace(/\.[a-z0-9]{2,4}$/i, ''));
+    let info, actions = '';
+    if (e.mp3) {
+      const gain = e.avant ? Math.round((1 - e.mp3.size / e.avant) * 100) : null;
+      info = `<span class="c-info">${e.avant ? `${mo(e.avant)} → ` : ''}${mo(e.mp3.size)}${gain > 0 ? ` <span class="gain">(−${gain} %)</span>` : ''}${expire ? ` · ${esc(t('c_supprime_le', { d: dateCourte(expire) }))}` : ''}</span>`;
+      actions = `<button class="small" data-c-play="${esc(e.mp3.path)}">${t('ecouter')}</button>
+        <button class="small" data-c-dl="${esc(e.mp3.path)}" data-nom="${base}">${t('telecharger')}</button>`;
+    } else {
+      const run = runDe(e.id);
+      if (run && run.status === 'completed' && run.conclusion !== 'success') {
+        info = `<span class="c-info err">${t('c_echec')}</span>`;
+      } else {
+        attente = true;
+        const enCours = run && run.status === 'in_progress';
+        info = `<span class="c-info">${enCours ? t('c_en_cours') : t('c_attente')}</span><div class="bar indefini"><div></div></div>`;
+      }
+    }
+    return `<li data-id="${esc(e.id)}"><span class="c-nom">${esc(e.nom)}</span>${info}
+      <div class="c-actions">${actions}<button class="link" data-c-del="${esc(e.id)}">${t('supprimer')}</button></div></li>`;
+  }).join('');
+  if (attente) compressionTimer = setTimeout(chargerCompresses, 10000);
+}
+
+$('#compresses').addEventListener('click', async (ev) => {
+  const b = ev.target.closest('button');
+  if (!b) return;
+  const li = b.closest('li');
+  const ancien = b.textContent;
+  try {
+    if (b.dataset.cPlay) {
+      const existant = li.querySelector('audio');
+      if (existant) { existant.remove(); b.textContent = t('ecouter'); return; }
+      b.textContent = t('chargement'); b.disabled = true;
+      const audio = document.createElement('audio');
+      audio.controls = true;
+      audio.src = URL.createObjectURL(new Blob([await telecharger(b.dataset.cPlay)], { type: 'audio/mpeg' }));
+      li.append(audio);
+      audio.play().catch(() => {});
+      b.textContent = t('fermer'); b.disabled = false;
+    } else if (b.dataset.cDl) {
+      b.textContent = t('chargement'); b.disabled = true;
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(new Blob([await telecharger(b.dataset.cDl)], { type: 'audio/mpeg' }));
+      a.download = `${b.dataset.nom.replace(/[\\/:*?"<>|]+/g, ' ').trim() || 'audio'}.mp3`;
+      document.body.append(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(a.href), 60000);
+      b.textContent = ancien; b.disabled = false;
+    } else if (b.dataset.cDel) {
+      const id = b.dataset.cDel;
+      if (!confirm(t('c_confirmer', { t: li.querySelector('.c-nom').textContent }))) return;
+      b.disabled = true; b.textContent = t('suppression');
+      const liste = (await gh(repo(`/contents/compression?ref=${BRANCH}`))).filter((f) => f.name.startsWith(id + '.'));
+      await commit(liste.map((f) => ({ path: f.path, sha: null })), `Suppression : compression/${id}`);
+      chargerCompresses();
+    }
+  } catch (e) {
+    b.textContent = ancien; b.disabled = false;
+    alert(erreurLisible(e));
+  }
+});
+
+const dropC = $('#drop-c');
+dropC.onclick = () => $('#file-c').click();
+dropC.onkeydown = (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); $('#file-c').click(); } };
+$('#file-c').onchange = (e) => { ajouterFichiersC([...e.target.files]); e.target.value = ''; };
+['dragenter', 'dragover'].forEach((n) => dropC.addEventListener(n, (e) => { e.preventDefault(); dropC.classList.add('over'); }));
+['dragleave', 'drop'].forEach((n) => dropC.addEventListener(n, (e) => { e.preventDefault(); dropC.classList.remove('over'); }));
+dropC.addEventListener('drop', (e) => ajouterFichiersC([...e.dataTransfer.files]));
+$('#liste-c').addEventListener('click', (e) => {
+  const b = e.target.closest('[data-retirer]');
+  if (b) { fichiersC.splice(+b.dataset.retirer, 1); dessinerFichiersC(); }
+});
+$('#btn-c').onclick = lancerCompression;
+const MO_PAR_HEURE = { voix: 29, petit: 22, minuscule: 14, musique: 58 };
+const majTailleC = () => { $('#taille-c').textContent = t('c_taille_h', { mo: MO_PAR_HEURE[$('#qualite-c').value] }); };
+$('#qualite-c').onchange = majTailleC;
+majTailleC();
+window.addEventListener('beforeunload', (e) => { if (envoiC) { e.preventDefault(); e.returnValue = ''; } });
 
 // ---------- Mot de passe ----------
 // Empreinte SHA-256 de « bethel: » + mot de passe. Vide = pas de mot de passe.
@@ -1297,7 +1567,8 @@ function demarrer() {
   $('#verrou').hidden = true;
   $('#appli').hidden = false;
   dessinerCibles();
-  if (cfg.token) { chargerBibliotheque(); suivreTravaux(); } else { ouvrirReglages(); }
+  dessinerFichiersC();
+  if (cfg.token) { chargerBibliotheque(); suivreTravaux(); chargerCompresses(); } else { ouvrirReglages(); }
 }
 
 appliquerTextes();

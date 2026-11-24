@@ -1,7 +1,7 @@
 name: Nettoyage des anciennes prêches
 
 # Chaque jour : supprime les prêches (MP3 reçus et traductions) envoyées il y a
-# plus de 30 jours, puis compacte l'historique de la branche preches pour que
+# plus de 30 jours (et les fichiers compressés), puis compacte l'historique de la branche preches pour que
 # GitHub libère vraiment la place. Se lance aussi à la main depuis l'onglet Actions.
 on:
   schedule:
@@ -46,7 +46,7 @@ jobs:
           import os, re, shutil, datetime
           limite = datetime.date.today() - datetime.timedelta(days=int(os.environ["JOURS"]))
           print(f"Suppression des prêches envoyées avant le {limite}")
-          for dossier in ("resultats", "entrees"):
+          for dossier in ("resultats", "entrees", "compression"):
               if not os.path.isdir(dossier):
                   continue
               for nom in sorted(os.listdir(dossier)):
