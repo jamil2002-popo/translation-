@@ -96,13 +96,18 @@ jobs:
           MATRICE=$(NOM="$NOM" python3 - <<'PY'
           import json, os
           noms = {"zh": "Chinois", "es": "Espagnol", "ru": "Russe", "hi": "Hindi", "en": "Anglais", "fr": "Français"}
+          toutes = json.load(open("langues.json", encoding="utf-8"))
           nom, source = os.environ["NOM"], os.environ["SOURCE"]
           a_faire = []
           for code in os.environ["LANGUES"].split():
-              mp3 = f"preches/resultats/{nom}/{nom}.{code}.mp3"
-              deja_fait = os.path.exists(mp3) and os.path.getsize(mp3) > 0 and os.environ.get("REFAIRE") != "oui"
-              if code in noms and code != source and not deja_fait:
-                  a_faire.append({"code": code, "nom": noms[code]})
+              if code == source or (code not in noms and code not in toutes):
+                  continue
+              base = f"preches/resultats/{nom}/{nom}.{code}"
+              # Fini = MP3 présent, ou texte présent pour une langue sans voix.
+              fini = base + (".mp3" if code in noms or toutes[code]["voix"] else ".txt")
+              deja_fait = os.path.exists(fini) and os.path.getsize(fini) > 0 and os.environ.get("REFAIRE") != "oui"
+              if not deja_fait:
+                  a_faire.append({"code": code, "nom": noms.get(code, f"Langue {code}")})
           print(json.dumps(a_faire, ensure_ascii=False))
           PY
           )
@@ -172,7 +177,9 @@ jobs:
     needs: [transcription, langue]
     # Même si une langue a échoué, on garde tout ce qui est fini :
     # le prochain essai reprendra là où ça s'est arrêté.
-    if: always() && needs.transcription.outputs.nom != ''
+    # !cancelled() : une langue en échec n'empêche pas d'enregistrer les autres,
+    # mais une traduction annulée depuis la page n'enregistre rien.
+    if: ${{ !cancelled() && needs.transcription.outputs.nom != '' }}
     runs-on: ubuntu-latest
     env:
       NOM: ${{ needs.transcription.outputs.nom }}

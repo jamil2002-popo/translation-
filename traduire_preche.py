@@ -38,7 +38,21 @@ LANGUES = {
     "pt": ("pt", "portugais", "pt-BR-AntonioNeural"),
     "ar": ("ar", "arabe", "ar-SA-HamedNeural"),
 }
-LANGUES_PAR_DEFAUT = ["zh", "es", "ru", "hi"]
+# Toutes les autres langues de Google Traduction (langues.json : code Google,
+# nom anglais, voix Microsoft disponibles ; liste vide = texte seulement).
+def _charger_langues() -> dict:
+    import json
+    try:
+        return json.loads(Path(__file__).with_name("langues.json").read_text(encoding="utf-8"))
+    except Exception:
+        return {}
+
+
+TOUTES = _charger_langues()
+for _code, _l in TOUTES.items():
+    if _code not in LANGUES:
+        LANGUES[_code] = (_l["google"], _l["nom"], _l["voix"][0] if _l["voix"] else None)
+LANGUES_PAR_DEFAUT = ["zh", "es", "ru"]
 
 # Google Traduction gratuit refuse les textes de plus de ~5000 caractères.
 TAILLE_MORCEAU = 4000
@@ -328,6 +342,7 @@ BIBLES = {
 NOMS_ANGLAIS = {"zh": "Simplified Chinese", "es": "Spanish", "ru": "Russian",
                 "hi": "Hindi", "en": "English", "fr": "French",
                 "pt": "Portuguese", "ar": "Arabic"}
+NOMS_ANGLAIS.update({c: l["nom"] for c, l in TOUTES.items() if c not in NOMS_ANGLAIS})
 
 
 def traduire(texte: str, source: str, langue: str, moteur: str) -> str:
@@ -358,6 +373,12 @@ def traduire(texte: str, source: str, langue: str, moteur: str) -> str:
             except Exception as e:
                 print(f"      Google refuse ({str(e)[:100]}). Suite avec la traduction locale.")
                 google_ok = False
+        if langue not in NLLB_CODES or source not in NLLB_CODES:
+            # Pas de traduction locale pour cette langue : on redonne une chance à Google.
+            time.sleep(30)
+            resultat.append(traduire_gtx(morceau, source, code_google))
+            google_ok = True
+            continue
         resultat.append(traduire_nllb(morceau, source, langue))
     return "\n".join(resultat)
 
@@ -372,12 +393,12 @@ le les des et est une du pour dans qui ne pas au aux sur ce cette nous vous il e
 o os da do das dos em não uma""".split())
 
 
-def phrase_anglaise(phrase: str, langue: str) -> bool:
+def phrase_anglaise(phrase: str, langue: str, alphabet_latin: bool = True) -> bool:
     """La phrase est-elle restée en anglais dans une traduction vers `langue` ?"""
     if langue == "en":
         return False
     latines = sum(c.isascii() and c.isalpha() for c in phrase)
-    if langue in ("zh", "ru", "hi", "ar"):  # autres alphabets : beaucoup de lettres latines = anglais
+    if langue in ("zh", "ru", "hi", "ar") or not alphabet_latin:  # autres alphabets : beaucoup de lettres latines = anglais
         autres = sum(c.isalpha() and not c.isascii() for c in phrase)
         return latines >= 12 and latines > 2 * autres
     mots = re.findall(r"[a-záéíóúñàâçèêëîïôûùüœ']+", phrase.lower())
@@ -385,6 +406,10 @@ def phrase_anglaise(phrase: str, langue: str) -> bool:
         return False
     anglais = sum(m in MOTS_ANGLAIS for m in mots)
     latins = sum(m in MOTS_LATINS for m in mots)
+    if langue not in ("es", "fr", "pt"):
+        # Autres langues à alphabet latin : on ne connaît pas leurs petits mots,
+        # on exige donc une phrase nettement anglaise.
+        return anglais >= max(3, 0.35 * len(mots))
     return anglais >= 2 and (latins == 0 or anglais >= max(3, 0.3 * len(mots)))
 
 
@@ -394,6 +419,8 @@ def traduire_phrase(phrase: str, source: str, langue: str) -> str:
         return traduire_gtx(phrase, source, LANGUES[langue][0])
     except Exception as e:
         print(f"      (Google indisponible pour la réparation : {str(e)[:80]})")
+        if langue not in NLLB_CODES:
+            raise
         return traduire_nllb(phrase, source, langue)
 
 
@@ -403,9 +430,11 @@ def reparer(traduction: str, source: str, langue: str) -> tuple[str, int]:
         return traduction, 0
     # Découpe en gardant la ponctuation (le chinois n'a pas d'espace entre les phrases).
     morceaux = re.split(r"(?<=[.!?。！？।])", traduction)
+    lettres = [c for c in traduction if c.isalpha()]
+    latin = not lettres or sum(c.isascii() for c in lettres) > 0.6 * len(lettres)
     reparees = 0
     for i, m in enumerate(morceaux):
-        if not phrase_anglaise(m, langue):
+        if not phrase_anglaise(m, langue, latin):
             continue
         debut = m[: len(m) - len(m.lstrip())]
         try:
@@ -413,7 +442,7 @@ def reparer(traduction: str, source: str, langue: str) -> tuple[str, int]:
         except Exception as e:
             print(f"      Phrase non réparée ({str(e)[:80]}) : {m.strip()[:60]}")
             continue
-        if nouvelle and not phrase_anglaise(nouvelle, langue):
+        if nouvelle and not phrase_anglaise(nouvelle, langue, latin):
             morceaux[i] = debut + nouvelle
             reparees += 1
         time.sleep(0.5)
@@ -458,10 +487,32 @@ FORMATS_VERSETS = {
 }
 
 
+def format_versets(langue: str) -> tuple[str, str]:
+    """« chapitre 6, verset 14 » dans la langue voulue. Pour les langues sans modèle
+    écrit à la main, Google traduit une phrase type et on y remet les nombres."""
+    if langue in FORMATS_VERSETS:
+        return FORMATS_VERSETS[langue]
+    neutre = ("{c}, {v}", "{c}, {v}, {w}")
+    try:
+        code = LANGUES[langue][0]
+        un = traduire_gtx("chapter 6, verse 14", "en", code)
+        plage = traduire_gtx("chapter 6, verses 14 to 18", "en", code)
+        if all(n in un for n in ("6", "14")) and all(n in plage for n in ("6", "14", "18")):
+            un = un.strip(" .。").replace("14", "{v}").replace("6", "{c}")
+            plage = plage.strip(" .。").replace("14", "{v}").replace("18", "{w}").replace("6", "{c}")
+            FORMATS_VERSETS[langue] = (un, plage)
+            print(f"      Références bibliques lues : « {un} »")
+            return un, plage
+    except Exception as e:
+        print(f"      (modèle de verset indisponible : {str(e)[:60]})")
+    FORMATS_VERSETS[langue] = neutre
+    return neutre
+
+
 def preparer_pour_voix(texte: str, langue: str) -> str:
     """Texte tel qu'il doit être lu : aucun symbole prononcé, références bibliques en toutes lettres."""
     texte = nettoyer_traduction(texte, langue)
-    un, plage = FORMATS_VERSETS.get(langue, FORMATS_VERSETS["en"])
+    un, plage = format_versets(langue)
 
     def verset(m):
         c, v, w = m.group(1), m.group(2), m.group(3)
@@ -512,9 +563,10 @@ async def voix_candidates(langue: str, preferee: str) -> list[str]:
     """La voix choisie, puis les voix de secours, puis toutes celles de la langue."""
     import edge_tts
 
-    liste = [preferee] + VOIX_SECOURS.get(langue, [])
+    liste = [preferee] + VOIX_SECOURS.get(langue, []) + TOUTES.get(langue, {}).get("voix", [])
+    liste = [v for v in liste if v]
     try:
-        code = LANGUES[langue][0].split("-")[0]
+        code = (liste[0].split("-")[0] if liste else LANGUES[langue][0].split("-")[0])
         toutes = await asyncio.wait_for(edge_tts.list_voices(), timeout=60)
         hommes = [v["ShortName"] for v in toutes
                   if v["Locale"].startswith(code + "-") and v.get("Gender") == "Male"]
@@ -587,7 +639,7 @@ def main() -> int:
     p = argparse.ArgumentParser(description="Traduit une prêche MP3 en plusieurs langues.")
     p.add_argument("audio", type=Path, help="Fichier audio de la prêche (MP3, WAV, M4A…)")
     p.add_argument("--langues", nargs="+", default=LANGUES_PAR_DEFAUT,
-                   choices=sorted(LANGUES), help="Langues cibles (défaut : zh es ru hi)")
+                   choices=sorted(LANGUES), help="Langues cibles (défaut : zh es ru ; liste complète dans langues.json)")
     p.add_argument("--source", default="en", help="Langue parlée dans la prêche (défaut : en)")
     p.add_argument("--modele", default="small",
                    help="Modèle Whisper : tiny, base, small, medium, large-v3 (défaut : small)")
@@ -660,6 +712,9 @@ def main() -> int:
 
             # 3. Voix (sautée si le MP3 existe déjà : supprime-le pour le refaire)
             fichier_mp3 = dossier / f"{args.audio.stem}.{langue}.mp3"
+            if not voix.get(langue, LANGUES[langue][2]):
+                print("[3/3] Aucune voix disponible pour cette langue : texte seulement.")
+                continue
             if fichier_mp3.exists() and fichier_mp3.stat().st_size > 0:
                 print(f"[3/3] Audio déjà fait : {fichier_mp3}")
                 continue

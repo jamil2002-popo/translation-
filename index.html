@@ -154,17 +154,17 @@
 
   /* Compression */
   .drop.compact { padding: 20px 16px; }
-  .compresses { list-style: none; margin: 0; padding: 0; }
-  .compresses:empty { display: none; }
-  .compresses li { display: grid; gap: 6px; padding: 12px 0; border-top: 1px solid var(--line); }
-  .compresses li:first-child { border-top: none; padding-top: 0; }
-  .compresses .c-nom { font-size: 14px; font-weight: 500; overflow-wrap: anywhere; }
-  .compresses .c-info { font-family: var(--font-mono); font-size: 12px; color: var(--muted); }
-  .compresses .c-info .gain { color: var(--ok); }
-  .compresses .c-info.err { color: var(--err); font-family: inherit; font-size: 13px; }
-  .compresses .c-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
-  .compresses audio { width: 100%; height: 36px; }
-  .compresses .bar { margin-top: 2px; }
+  .c-taille { font-family: var(--font-mono); font-size: 12px; color: var(--muted); white-space: nowrap; }
+  .c-taille .gain { color: var(--ok); }
+  .c-etat { font-size: 12.5px; color: var(--muted); white-space: nowrap; }
+  .c-etat.err { color: var(--err); }
+  .c-corps { display: grid; gap: 10px; padding-top: 12px; }
+  .c-corps .c-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .c-corps audio { width: 100%; height: 36px; }
+  #compresses .preche summary { grid-template-columns: 116px minmax(0, 1fr) auto 18px; }
+  @media (max-width: 640px) { #compresses .preche summary { grid-template-columns: minmax(0, 1fr) 18px; } #compresses .c-taille, #compresses .c-etat { grid-column: 1; } }
+  .job-pied .annuler { margin-left: auto; }
+  .job-pied .annuler + .lien-details { margin-left: 0; }
   .bar.indefini > div { width: 35% !important; animation: va-et-vient 1.4s ease-in-out infinite; }
   @keyframes va-et-vient { 0% { margin-left: 0; } 50% { margin-left: 65%; } 100% { margin-left: 0; } }
 
@@ -194,6 +194,17 @@
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M2.5 6.2 5 8.5l4.5-5' fill='none' stroke='white' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
   }
   .cible input:focus-visible + span { outline: 2px solid var(--accent); outline-offset: 1px; }
+  .autres { border: 1px solid var(--line); border-radius: 8px; background: var(--surface-2); }
+  .autres summary { cursor: pointer; padding: 9px 12px; font-size: 14px; font-weight: 500; display: flex; gap: 8px; align-items: baseline; }
+  .autres[open] summary { border-bottom: 1px solid var(--line); }
+  .autres input[type=search] { font: inherit; width: calc(100% - 20px); margin: 10px 10px 4px; padding: 7px 10px; border-radius: 6px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); }
+  .autres-liste { max-height: 240px; overflow-y: auto; padding: 4px 10px; display: grid; }
+  .autres-liste label { display: flex; align-items: center; gap: 8px; padding: 6px 2px; font-size: 14px; cursor: pointer; border-bottom: 1px solid var(--line); }
+  .autres-liste label:last-child { border-bottom: none; }
+  .autres-liste input { accent-color: var(--accent); width: 16px; height: 16px; flex: none; }
+  .autres-liste small { color: var(--muted); font-size: 12px; }
+  .autres-liste .tag { margin-left: auto; font-size: 11px; color: var(--muted); white-space: nowrap; }
+  .autres > .hint { display: block; padding: 6px 12px 10px; font-size: 12px; }
   .natif { color: var(--muted); font-size: 13px; margin-left: auto; white-space: nowrap; }
 
   /* Messages */
@@ -370,6 +381,12 @@
         <div class="champ">
           <span class="etiquette" id="l-cibles" data-i18n="traduire_en">Traduire en</span>
           <div class="cibles" id="cibles" role="group" aria-labelledby="l-cibles"></div>
+          <details class="autres" id="autres">
+            <summary><span data-i18n="autres_langues">Autres langues</span> <span id="autres-compte" class="compte"></span></summary>
+            <input id="autres-filtre" type="search" data-i18n-placeholder="chercher_langue" placeholder="Chercher une langue…" autocomplete="off">
+            <div id="autres-liste" class="autres-liste" role="group" aria-label="Autres langues"></div>
+            <span class="hint" data-i18n="sans_voix_aide">« texte seulement » : aucune voix n'existe pour cette langue, tu recevras la traduction écrite.</span>
+          </details>
         </div>
 
         <div class="champ">
@@ -417,7 +434,6 @@
           <span class="hint" data-i18n="c_aide">Le résultat est toujours un MP3. Compte 1 à 3 minutes par fichier une fois l'envoi terminé.</span>
         </div>
         <div id="c-msg"></div>
-        <ul id="compresses" class="compresses"></ul>
       </div>
     </section>
     </div>
@@ -433,6 +449,12 @@
       <section class="panel" aria-labelledby="t-lib">
         <div class="panel-tete"><h2 id="t-lib" data-i18n="traduites">Prêches traduites</h2><span id="lib-count" class="compte"></span></div>
         <div id="library"><div class="vide">Connecte-toi dans les réglages pour voir tes prêches.</div></div>
+      </section>
+
+      <!-- Fichiers compressés -->
+      <section class="panel" aria-labelledby="t-comp-lib">
+        <div class="panel-tete"><h2 id="t-comp-lib" data-i18n="compresses">Fichiers compressés</h2><span id="comp-count" class="compte"></span></div>
+        <div id="compresses"></div>
       </section>
     </div>
   </div>
@@ -488,6 +510,10 @@ const TEXTES = {
     c_envoi: 'Envoi de « {nom} »… {p} %', c_envoyes: '{ok} fichier(s) sur {n} envoyé(s). La compression continue sur GitHub, même si tu fermes la page.',
     c_attente: "En attente d'un serveur GitHub…", c_en_cours: 'Compression en cours…', c_echec: 'La compression a échoué. Supprime-le et renvoie le fichier.',
     c_supprime_le: 'supprimé le {d}', c_confirmer: 'Supprimer « {t} » ?',
+    autres_langues: 'Autres langues', chercher_langue: 'Chercher une langue…', texte_seul: 'texte seulement', n_choisies: '{n} choisie(s)',
+    sans_voix_aide: "« texte seulement » : aucune voix n'existe pour cette langue, tu recevras la traduction écrite.",
+    annuler: 'Annuler', annulation: 'Annulation…', confirmer_annul: 'Annuler la traduction de « {t} » ?', confirmer_annul_c: 'Annuler la compression de « {t} » ?',
+    compresses: 'Fichiers compressés', c_lib_vide: 'Aucun fichier compressé pour le moment.',
     l_zh: 'Chinois', l_es: 'Espagnol', l_ru: 'Russe', l_hi: 'Hindi', l_en: 'Anglais', l_fr: 'Français', l_pt: 'Portugais', l_ar: 'Arabe',
   },
   en: {
@@ -536,6 +562,10 @@ const TEXTES = {
     c_envoi: 'Uploading “{nom}”… {p}%', c_envoyes: '{ok} of {n} file(s) uploaded. Compression continues on GitHub, even if you close the page.',
     c_attente: 'Waiting for a GitHub server…', c_en_cours: 'Compressing…', c_echec: 'Compression failed. Delete it and upload the file again.',
     c_supprime_le: 'deleted on {d}', c_confirmer: 'Delete “{t}”?',
+    autres_langues: 'More languages', chercher_langue: 'Search a language…', texte_seul: 'text only', n_choisies: '{n} selected',
+    sans_voix_aide: '“text only”: no voice exists for this language, you will get the written translation.',
+    annuler: 'Cancel', annulation: 'Cancelling…', confirmer_annul: 'Cancel the translation of “{t}”?', confirmer_annul_c: 'Cancel the compression of “{t}”?',
+    compresses: 'Compressed files', c_lib_vide: 'No compressed files yet.',
     l_zh: 'Chinese', l_es: 'Spanish', l_ru: 'Russian', l_hi: 'Hindi', l_en: 'English', l_fr: 'French', l_pt: 'Portuguese', l_ar: 'Arabic',
   },
 };
@@ -550,6 +580,7 @@ function appliquerTextes() {
   document.documentElement.lang = UI;
   document.querySelectorAll('[data-i18n]').forEach((el) => { el.textContent = t(el.dataset.i18n); });
   document.querySelectorAll('[data-i18n-html]').forEach((el) => { el.innerHTML = t(el.dataset.i18nHtml); });
+  document.querySelectorAll('[data-i18n-placeholder]').forEach((el) => { el.placeholder = t(el.dataset.i18nPlaceholder); });
   document.querySelectorAll('.choix-langue [data-ui]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.ui === UI)));
 }
 document.querySelectorAll('.choix-langue [data-ui]').forEach((b) => {
@@ -560,10 +591,31 @@ document.querySelectorAll('.choix-langue [data-ui]').forEach((b) => {
   };
 });
 
-const LANGS = Object.fromEntries(['zh', 'es', 'ru', 'hi', 'en', 'fr', 'pt', 'ar'].map((l) => [l, t('l_' + l)]));
-const NATIF = { zh: '中文', es: 'Español', ru: 'Русский', hi: 'हिन्दी', en: 'English', fr: 'Français', pt: 'Português', ar: 'العربية' };
+// Toutes les langues de Google Traduction : code -> [nom anglais, 1 si une voix existe].
+// Généré depuis langues.json (même liste que le programme de traduction).
+// LANGUES-DEBUT
+const LANGUES_GOOGLE = {"aa":["Afar",0],"ab":["Abkhaz",0],"ace":["Acehnese",0],"ach":["Acholi",0],"af":["Afrikaans",1],"ak":["Twi",0],"alz":["Alur",0],"am":["Amharic",1],"ar":["Arabic",1],"as":["Assamese",0],"av":["Avar",0],"awa":["Awadhi",0],"ay":["Aymara",0],"az":["Azerbaijani",1],"ba":["Bashkir",0],"bal":["Baluchi",0],"ban":["Balinese",0],"bbc":["Batak Toba",0],"bci":["Baoulé",0],"be":["Belarusian",0],"bem":["Bemba",0],"ber":["Tamazight (Tifinagh)",0],"ber-Latn":["Tamazight",0],"bew":["Betawi",0],"bg":["Bulgarian",1],"bho":["Bhojpuri",0],"bik":["Bikol",0],"bm":["Bambara",0],"bm-Nkoo":["NKo",0],"bn":["Bengali",1],"bo":["Tibetan",0],"br":["Breton",0],"bs":["Bosnian",1],"bts":["Batak Simalungun",0],"btx":["Batak Karo",0],"bua":["Buryat",0],"ca":["Catalan",1],"ce":["Chechen",0],"ceb":["Cebuano",0],"cgg":["Kiga",0],"ch":["Chamorro",0],"chk":["Chuukese",0],"chm":["Meadow Mari",0],"ckb":["Kurdish (Sorani)",0],"cnh":["Hakha Chin",0],"co":["Corsican",0],"crh":["Crimean Tatar (Cyrillic)",0],"crh-Latn":["Crimean Tatar (Latin)",0],"crs":["Seychellois Creole",0],"cs":["Czech",1],"cv":["Chuvash",0],"cy":["Welsh",1],"da":["Danish",1],"de":["German",1],"din":["Dinka",0],"doi":["Dogri",0],"dov":["Dombe",0],"dv":["Dhivehi",0],"dyu":["Dyula",0],"dz":["Dzongkha",0],"ee":["Ewe",0],"el":["Greek",1],"en":["English",1],"eo":["Esperanto",0],"es":["Spanish",1],"et":["Estonian",1],"eu":["Basque",0],"fa":["Persian",1],"fa-AF":["Dari",0],"ff":["Fulani",0],"fi":["Finnish",1],"fj":["Fijian",0],"fo":["Faroese",0],"fon":["Fon",0],"fr":["French",1],"fr-CA":["French (Canada)",1],"fur":["Friulian",0],"fy":["Frisian",0],"ga":["Irish",1],"gaa":["Ga",0],"gd":["Scots Gaelic",0],"gl":["Galician",1],"gn":["Guarani",0],"gom":["Konkani",0],"gu":["Gujarati",1],"gv":["Manx",0],"ha":["Hausa",0],"haw":["Hawaiian",0],"he":["Hebrew",1],"hi":["Hindi",1],"hil":["Hiligaynon",0],"hmn":["Hmong",0],"hr":["Croatian",1],"hrx":["Hunsrik",0],"ht":["Haitian Creole",0],"hu":["Hungarian",1],"hy":["Armenian",0],"iba":["Iban",0],"id":["Indonesian",1],"ig":["Igbo",0],"ilo":["Ilocano",0],"is":["Icelandic",1],"it":["Italian",1],"iu":["Inuktut (Syllabics)",1],"iu-Latn":["Inuktut (Latin)",0],"ja":["Japanese",1],"jam":["Jamaican Patois",0],"jv":["Javanese",1],"ka":["Georgian",1],"kac":["Jingpo",0],"kek":["Qʼeqchiʼ",0],"kg":["Kikongo",0],"kha":["Khasi",0],"kk":["Kazakh",1],"kl":["Kalaallisut",0],"km":["Khmer",1],"kn":["Kannada",1],"ko":["Korean",1],"kr":["Kanuri",0],"kri":["Krio",0],"ktu":["Kituba",0],"ku":["Kurdish (Kurmanji)",0],"kv":["Komi",0],"ky":["Kyrgyz",0],"la":["Latin",0],"lb":["Luxembourgish",0],"lg":["Luganda",0],"li":["Limburgish",0],"lij":["Ligurian",0],"lmo":["Lombard",0],"ln":["Lingala",0],"lo":["Lao",1],"lt":["Lithuanian",1],"ltg":["Latgalian",0],"lua":["Tshiluba",0],"luo":["Luo",0],"lus":["Mizo",0],"lv":["Latvian",1],"mad":["Madurese",0],"mai":["Maithili",0],"mak":["Makassar",0],"mam":["Mam",0],"mfe":["Mauritian Creole",0],"mg":["Malagasy",0],"mh":["Marshallese",0],"mi":["Maori",0],"min":["Minang",0],"mk":["Macedonian",1],"ml":["Malayalam",1],"mn":["Mongolian",1],"mni-Mtei":["Meiteilon (Manipuri)",0],"mr":["Marathi",1],"ms":["Malay",1],"ms-Arab":["Malay (Jawi)",0],"mt":["Maltese",1],"mwr":["Marwadi",0],"my":["Myanmar (Burmese)",1],"ndc-ZW":["Ndau",0],"ne":["Nepali",1],"new":["Nepalbhasa (Newari)",0],"nhe":["Nahuatl (Eastern Huasteca)",0],"nl":["Dutch",1],"no":["Norwegian",1],"nr":["Ndebele (South)",0],"nso":["Sepedi",0],"nus":["Nuer",0],"ny":["Chichewa",0],"oc":["Occitan",0],"om":["Oromo",0],"or":["Odia (Oriya)",0],"os":["Ossetian",0],"pa":["Punjabi (Gurmukhi)",0],"pa-Arab":["Punjabi (Shahmukhi)",0],"pag":["Pangasinan",0],"pam":["Kapampangan",0],"pap":["Papiamento",0],"pl":["Polish",1],"ps":["Pashto",1],"pt":["Portuguese (Brazil)",1],"pt-PT":["Portuguese (Portugal)",1],"qu":["Quechua",0],"rn":["Rundi",0],"ro":["Romanian",1],"rom":["Romani",0],"ru":["Russian",1],"rw":["Kinyarwanda",0],"sa":["Sanskrit",0],"sah":["Yakut",0],"sat":["Santali (Ol Chiki)",0],"sat-Latn":["Santali (Latin)",0],"scn":["Sicilian",0],"sd":["Sindhi",0],"se":["Sami (North)",0],"sg":["Sango",0],"shn":["Shan",0],"si":["Sinhala",1],"sk":["Slovak",1],"sl":["Slovenian",1],"sm":["Samoan",0],"sn":["Shona",0],"so":["Somali",1],"sq":["Albanian",1],"sr":["Serbian",1],"ss":["Swati",0],"st":["Sesotho",0],"su":["Sundanese",1],"sus":["Susu",0],"sv":["Swedish",1],"sw":["Swahili",1],"szl":["Silesian",0],"ta":["Tamil",1],"tcy":["Tulu",0],"te":["Telugu",1],"tet":["Tetum",0],"tg":["Tajik",0],"th":["Thai",1],"ti":["Tigrinya",0],"tiv":["Tiv",0],"tk":["Turkmen",0],"tl":["Filipino",1],"tn":["Tswana",0],"to":["Tongan",0],"tpi":["Tok Pisin",0],"tr":["Turkish",1],"trp":["Kokborok",0],"ts":["Tsonga",0],"tt":["Tatar",0],"tum":["Tumbuka",0],"ty":["Tahitian",0],"tyv":["Tuvan",0],"udm":["Udmurt",0],"ug":["Uyghur",0],"uk":["Ukrainian",1],"ur":["Urdu",1],"uz":["Uzbek",1],"ve":["Venda",0],"vec":["Venetian",0],"vi":["Vietnamese",1],"war":["Waray",0],"wo":["Wolof",0],"xh":["Xhosa",0],"yi":["Yiddish",0],"yo":["Yoruba",0],"yua":["Yucatec Maya",0],"yue":["Cantonese",1],"zap":["Zapotec",0],"zh":["Chinese (Simplified)",1],"zh-TW":["Chinese (Traditional)",1],"zu":["Zulu",1]};
+// LANGUES-FIN
+const LANGS = {}, NATIF = { zh: '中文', es: 'Español', ru: 'Русский', hi: 'हिन्दी', en: 'English', fr: 'Français', pt: 'Português', ar: 'العربية' };
+(() => {
+  let noms = null;
+  try { noms = new Intl.DisplayNames([UI], { type: 'language' }); } catch {}
+  for (const [code, [anglais]] of Object.entries(LANGUES_GOOGLE)) {
+    let nom = TEXTES[UI]['l_' + code];
+    if (!nom) { try { nom = noms && noms.of(code); } catch {} }
+    if (!nom || nom === code) nom = anglais;
+    LANGS[code] = nom.charAt(0).toLocaleUpperCase(UI) + nom.slice(1);
+    if (!NATIF[code]) {
+      try {
+        const natif = new Intl.DisplayNames([code], { type: 'language' }).of(code);
+        if (natif && natif !== code && natif.toLowerCase() !== nom.toLowerCase()) NATIF[code] = natif.charAt(0).toLocaleUpperCase(code) + natif.slice(1);
+      } catch {}
+    }
+  }
+})();
+const AVEC_VOIX = (code) => !LANGUES_GOOGLE[code] || LANGUES_GOOGLE[code][1] === 1;
 const CIBLES = ['zh', 'es', 'ru', 'hi', 'en', 'fr'];
-const PAR_DEFAUT = ['zh', 'es', 'ru', 'hi'];
+const PAR_DEFAUT = ['zh', 'es', 'ru'];
 const BRANCH = 'preches';
 const WORKFLOW = 'traduire.yml';
 const API = 'https://api.github.com';
@@ -677,8 +729,20 @@ function dessinerCibles() {
   majBouton();
 }
 
+const languesChoisies = () => [...document.querySelectorAll('#cibles input:checked, #autres-liste input:checked')].map((i) => i.value);
+
+function dessinerAutres() {
+  const autres = Object.keys(LANGUES_GOOGLE).filter((l) => !CIBLES.includes(l))
+    .sort((a, b) => LANGS[a].localeCompare(LANGS[b], UI));
+  $('#autres-liste').innerHTML = autres.map((l) => `<label data-cherche="${esc((LANGS[l] + ' ' + (NATIF[l] || '') + ' ' + LANGUES_GOOGLE[l][0] + ' ' + l).toLowerCase())}">
+    <input type="checkbox" value="${esc(l)}"><span>${esc(LANGS[l])}${NATIF[l] ? ` <small>${esc(NATIF[l])}</small>` : ''}</span>
+    ${AVEC_VOIX(l) ? '' : `<span class="tag">${t('texte_seul')}</span>`}</label>`).join('');
+}
+
 function majBouton() {
-  const n = document.querySelectorAll('#cibles input:checked').length;
+  const extra = document.querySelectorAll('#autres-liste input:checked').length;
+  $('#autres-compte').textContent = extra ? t('n_choisies', { n: extra }) : '';
+  const n = languesChoisies().length;
   const btn = $('#btn-go');
   btn.disabled = envoiEnCours || !fichiers.length || !n;
   btn.textContent = envoiEnCours ? t('envoi_en_cours')
@@ -756,13 +820,17 @@ async function envoyerUne(f, id, reglages) {
   const ext = (f.name.match(/\.[a-zA-Z0-9]+$/) || ['.mp3'])[0].toLowerCase();
   const chemin = `entrees/${id}${ext}`;
   const carte = ajouterJob(id, t('attente_envoi'));
+  carte.envoi = true;
+  const arret = () => { if (carte.annule) { retirerJob(id); return true; } return false; };
   return async () => {
     try {
+      if (arret()) return false;
       // GitHub refuse les gros envois d'un coup : on découpe en morceaux,
       // que le workflow recolle avant la traduction.
       const n = Math.ceil(f.size / MORCEAU) || 1;
       const parties = [];
       for (let i = 0; i < n; i++) {
+        if (arret()) return false;
         const b64 = await lireBase64(f.slice(i * MORCEAU, (i + 1) * MORCEAU));
         const blob = await envoyerBlob(b64, (p) => {
           const total = (i + p) / n;
@@ -776,6 +844,8 @@ async function envoyerUne(f, id, reglages) {
       parties.push({ path: `entrees/${id}.nom.txt`, sha: nom.sha });
       const secondes = await dureeAudio(f);
       if (secondes) parties.push({ path: `entrees/${id}.duree-${Math.round(secondes)}.txt`, sha: nom.sha });
+      if (arret()) return false;
+      carte.envoi = false;
       await commit(parties, `Nouvelle prêche : ${f.name}`);
       carte.progression(1, t('demarrage'));
       await post(`/actions/workflows/${WORKFLOW}/dispatches`, {
@@ -794,7 +864,7 @@ async function envoyerUne(f, id, reglages) {
 async function lancer() {
   if (!cfg.token) { ouvrirReglages(); return; }
   const reglages = {
-    langues: [...document.querySelectorAll('#cibles input:checked')].map((i) => i.value).join(' '),
+    langues: languesChoisies().join(' '),
     source: document.querySelector('input[name=source]:checked').value,
     modele: $('#modele').value,
   };
@@ -852,11 +922,13 @@ function ajouterJob(id, texte) {
       <div class="bar"><div></div></div>
       <div class="job-pied">
         <span class="status"></span>
+        <button class="link annuler" type="button">${t('annuler')}</button>
         <button class="lien-details" type="button" aria-expanded="false" hidden>${t('detail')} ${CHEVRON_BAS}</button>
       </div>
       <ol class="etapes" hidden></ol>`;
     $('#jobs').prepend(el);
     const btn = el.querySelector('.lien-details'), liste = el.querySelector('.etapes');
+    el.querySelector('.annuler').onclick = () => annulerTraduction(id);
     btn.onclick = () => {
       const ouvert = btn.getAttribute('aria-expanded') !== 'true';
       btn.setAttribute('aria-expanded', String(ouvert));
@@ -869,7 +941,7 @@ function ajouterJob(id, texte) {
     el,
     progression(p, texte) { bar.classList.remove('indeterminate'); bar.firstElementChild.style.width = `${p * 100}%`; pct.textContent = `${Math.round(p * 100)} %`; st.className = 'status'; st.textContent = texte; },
     attente(texte = t('attente_serveur')) { bar.classList.add('indeterminate'); pct.textContent = ''; st.className = 'status'; st.textContent = texte; },
-    erreur(texte, lien) { bar.classList.remove('indeterminate'); bar.firstElementChild.style.width = '0'; pct.textContent = ''; st.className = 'status err'; st.innerHTML = esc(texte) + (lien ? ` <a href="${esc(lien)}" target="_blank" rel="noopener">${t('voir_detail')}</a>` : ''); },
+    erreur(texte, lien) { el.querySelector('.annuler').hidden = true; bar.classList.remove('indeterminate'); bar.firstElementChild.style.width = '0'; pct.textContent = ''; st.className = 'status err'; st.innerHTML = esc(texte) + (lien ? ` <a href="${esc(lien)}" target="_blank" rel="noopener">${t('voir_detail')}</a>` : ''); },
     // Détail par étape : [{ nom, sous, p, etat: 'fait' | 'encours' | 'attente' | 'echec' }]
     etapes(lignes) {
       btn.hidden = !lignes || !lignes.length;
@@ -891,6 +963,38 @@ function ajouterJob(id, texte) {
   return carte;
 }
 
+// Arrête une traduction : pendant l'envoi, l'envoi s'interrompt ; ensuite, le run
+// GitHub est annulé et, si rien n'était encore traduit, le fichier envoyé est retiré.
+const annulees = new Set();
+async function annulerTraduction(id) {
+  const carte = jobs.get(id);
+  if (!carte || !confirm(t('confirmer_annul', { t: titre(id) }))) return;
+  annulees.add(id);
+  carte.annule = true;
+  carte.attente(t('annulation'));
+  carte.el.querySelector('.annuler').hidden = true;
+  if (carte.envoi) return; // envoyerUne s'arrête d'elle-même au prochain morceau
+  try {
+    // Le run peut mettre quelques secondes à apparaître juste après l'envoi.
+    for (let essai = 0; essai < 8; essai++) {
+      const { workflow_runs: runs } = await gh(repo(`/actions/workflows/${WORKFLOW}/runs?per_page=20`));
+      const run = runs.find((r) => idDuRun(r) === id && r.status !== 'completed');
+      if (run) { await post(`/actions/runs/${run.id}/cancel`, {}); break; }
+      await new Promise((ok) => setTimeout(ok, 4000));
+    }
+    let dejaTraduite = false;
+    try { dejaTraduite = (await gh(repo(`/contents/resultats/${encodeURIComponent(id)}?ref=${BRANCH}`))).length > 0; } catch {}
+    if (!dejaTraduite) {
+      let entrees = [];
+      try { entrees = (await gh(repo(`/contents/entrees?ref=${BRANCH}`))).filter((f) => f.name.startsWith(id + '.')); } catch {}
+      if (entrees.length) await commit(entrees.map((f) => ({ path: f.path, sha: null })), `Annulation : ${id}`);
+    }
+    retirerJob(id);
+  } catch (e) {
+    carte.erreur(erreurLisible(e));
+  }
+}
+
 function retirerJob(id) {
   const c = jobs.get(id);
   if (c) c.el.remove();
@@ -907,8 +1011,9 @@ function retirerJob(id) {
 const ETAPES_PREPARATION = ['Set up job', 'Préparation', 'Récupération de la prêche', 'Installation de Python', 'Cache du modèle Whisper', 'Installation des outils'];
 const NOMS_LANGUES = { Chinois: 'zh', Espagnol: 'es', Russe: 'ru', Hindi: 'hi', Anglais: 'en', 'Français': 'fr' };
 const NOM_TACHE = Object.fromEntries(Object.entries(NOMS_LANGUES).map(([n, c]) => [c, n]));
+const nomTache = (code) => NOM_TACHE[code] || `Langue ${code}`;
 const MIN_PAR_MIN_DEFAUT = {
-  Transcription: 0.47, Chinois: 0.15, Espagnol: 0.15, Russe: 0.2, Hindi: 0.35, Anglais: 0.15, 'Français': 0.15,
+  Transcription: 0.47, autre: 0.2, Chinois: 0.15, Espagnol: 0.15, Russe: 0.2, Hindi: 0.35, Anglais: 0.15, 'Français': 0.15,
   'Transcription, traduction et voix': 2.4, // ancienne version du workflow, en une seule étape
 };
 const PREPARATION_MIN = 3, DEMARRAGE_LANGUE_MIN = 2, ENREGISTREMENT_MIN = 1.5, DUREE_PAR_DEFAUT_MIN = 40;
@@ -968,7 +1073,7 @@ function idDuRun(run) {
   return m && m[1];
 }
 function languesDuRun(run) {
-  const m = (run.display_title || '').match(/·\s*([a-z ]+)$/);
+  const m = (run.display_title || '').match(/·\s*([A-Za-z0-9 -]+)$/);
   return m ? m[1].trim().split(/\s+/) : null;
 }
 
@@ -1005,12 +1110,11 @@ function analyserRun(jobsGithub, audio, langues) {
     ajouter(t('prep'), '', steps.filter((e) => ETAPES_PREPARATION.includes(e.name)), PREPARATION_MIN, 'avant');
     ajouter(t('transcription'), '', [steps.find((e) => e.name === 'Transcription') || (trans.status === 'completed' ? trans : null)], audio * minParMin.Transcription, 'avant');
     for (const code of langues || []) {
-      const nomTache = NOM_TACHE[code];
-      if (!nomTache) continue;
-      let job = jobsGithub.find((j) => j.name === nomTache);
+      const tache = nomTache(code);
+      let job = jobsGithub.find((j) => j.name === tache);
       // Pas de tâche alors que la transcription est finie : langue déjà faite lors d'un essai précédent.
       if (!job && trans.status === 'completed' && trans.conclusion === 'success') job = { status: 'completed', conclusion: 'success' };
-      ajouter(LANGS[code], NATIF[code], [job], DEMARRAGE_LANGUE_MIN + audio * minParMin[nomTache], 'langue');
+      ajouter(LANGS[code] || code, NATIF[code], [job], DEMARRAGE_LANGUE_MIN + audio * (minParMin[tache] || minParMin.autre), 'langue');
     }
     ajouter(t('enreg_etape'), '', [jobsGithub.find((j) => j.name === 'Enregistrement')], ENREGISTREMENT_MIN, 'apres');
   } else {
@@ -1053,7 +1157,7 @@ async function suivreTravaux() {
     }
     for (const run of runs) {
       const id = idDuRun(run);
-      if (!id) continue;
+      if (!id || annulees.has(id)) continue;
       if (run.status !== 'completed') {
         actifs++;
         const carte = jobs.get(id) || ajouterJob(id, '');
@@ -1173,6 +1277,8 @@ async function chargerBibliotheque() {
   }).join('')}</div>`;
 }
 
+const ordre = (l) => (CIBLES.includes(l) ? CIBLES.indexOf(l) : 99);
+
 // Les langues d'une prêche ne sont chargées qu'à son ouverture.
 async function chargerLangues(details) {
   if (details.dataset.charge) return;
@@ -1182,17 +1288,17 @@ async function chargerLangues(details) {
     const fichiers = await gh(repo(`/contents/${details.dataset.path}?ref=${BRANCH}`));
     const par = {};
     for (const f of fichiers) {
-      const m = f.name.match(/\.([a-z]{2})\.(mp3|txt)$/);
+      const m = f.name.match(/^[^.]+\.([A-Za-z]{2,3}(?:-[A-Za-z0-9]{2,4})?)\.(mp3|txt)$/);
       if (m) (par[m[1]] ||= {})[m[2]] = f;
     }
     zone.innerHTML = Object.keys(par)
-      .sort((a, b) => (par[b].mp3 ? 1 : 0) - (par[a].mp3 ? 1 : 0) || CIBLES.indexOf(a) - CIBLES.indexOf(b))
+      .sort((a, b) => (par[b].mp3 ? 1 : 0) - (par[a].mp3 ? 1 : 0) || ordre(a) - ordre(b) || (LANGS[a] || a).localeCompare(LANGS[b] || b, UI))
       .map((l) => {
         const { mp3, txt } = par[l];
         const nom = LANGS[l] || l.toUpperCase();
         return `<div class="lang">
           <span class="code">${l}</span>
-          <span class="lang-nom">${esc(nom)}${NATIF[l] && NATIF[l] !== nom ? `<small>${NATIF[l]}</small>` : ''}${mp3 ? '' : ` <small>${t('texte_original')}</small>`}</span>
+          <span class="lang-nom">${esc(nom)}${NATIF[l] && NATIF[l] !== nom ? `<small>${NATIF[l]}</small>` : ''}${mp3 ? '' : ` <small>${AVEC_VOIX(l) ? t('texte_original') : t('texte_seul')}</small>`}</span>
           <span class="lang-btns">
             ${mp3 ? `<button class="small" data-play="${esc(mp3.path)}">${t('ecouter')}</button>
                      <button class="small" data-dl="${esc(mp3.path)}" data-lang="${l}">${t('telecharger')}</button>` : ''}
@@ -1200,7 +1306,7 @@ async function chargerLangues(details) {
           </span>
         </div>`;
       }).join('') || `<span class="hint">${t('aucun_fichier')}</span>`;
-    const mp3s = CIBLES.filter((l) => par[l] && par[l].mp3);
+    const mp3s = Object.keys(par).filter((l) => par[l].mp3).sort((a, b) => ordre(a) - ordre(b));
     if (mp3s.length > 1) {
       details.querySelector('.tout').innerHTML =
         `<button class="small" data-dl-tout="${esc(details.dataset.id)}" data-langs="${mp3s.join(' ')}">${t('tout_telecharger', { n: mp3s.length })}</button>`;
@@ -1348,6 +1454,11 @@ $('#liste').addEventListener('click', (e) => {
 });
 document.querySelectorAll('input[name=source]').forEach((r) => (r.onchange = dessinerCibles));
 $('#cibles').addEventListener('change', majBouton);
+$('#autres-liste').addEventListener('change', majBouton);
+$('#autres-filtre').addEventListener('input', (e) => {
+  const q = e.target.value.trim().toLowerCase();
+  document.querySelectorAll('#autres-liste label').forEach((l) => { l.hidden = q && !l.dataset.cherche.includes(q); });
+});
 $('#btn-go').onclick = lancer;
 
 // ---------- Compression de MP3 ----------
@@ -1463,47 +1574,75 @@ async function chargerCompresses() {
     if (!e.nom) e.nom = titre(e.id);
   }
 
+  $('#comp-count').textContent = items.length ? String(items.length) : '';
+  if (!items.length) { $('#compresses').innerHTML = `<div class="vide">${t('c_lib_vide')}</div>`; return; }
+  // Tri par date trouvée dans le nom (comme les prêches), sinon par date d'envoi.
+  const ms = (d) => (d ? d.getTime() : 0);
+  for (const e of items) {
+    Object.assign(e, analyser(e.id));
+    const d = trouverDate(e.nom.replace(/\.[a-z0-9]{2,4}$/i, '').replace(/[-_.]+/g, ' ').replace(/\s+/g, ' '));
+    if (d) e.date = d.date;
+  }
+  items.sort((a, b) => (!!b.date - !!a.date) || ms(b.date) - ms(a.date) || ms(b.envoi) - ms(a.envoi));
+  const ouverts = new Set([...document.querySelectorAll('#compresses details[open]')].map((d) => d.dataset.id));
+
   let attente = false;
-  $('#compresses').innerHTML = items.map((e) => {
-    const m = e.id.match(/^(\d{4})-(\d{2})-(\d{2})_/);
-    const expire = m && new Date(+m[1], +m[2] - 1, +m[3] + CONSERVATION_JOURS + 1);
+  $('#compresses').innerHTML = `<div class="liste-preches">${items.map((e) => {
+    const expire = e.envoi && new Date(e.envoi.getFullYear(), e.envoi.getMonth(), e.envoi.getDate() + CONSERVATION_JOURS + 1);
     const base = esc(e.nom.replace(/\.[a-z0-9]{2,4}$/i, ''));
-    let info, actions = '';
+    let etat, corps, ouvert = ouverts.has(e.id);
     if (e.mp3) {
       const gain = e.avant ? Math.round((1 - e.mp3.size / e.avant) * 100) : null;
-      info = `<span class="c-info">${e.avant ? `${mo(e.avant)} → ` : ''}${mo(e.mp3.size)}${gain > 0 ? ` <span class="gain">(−${gain} %)</span>` : ''}${expire ? ` · ${esc(t('c_supprime_le', { d: dateCourte(expire) }))}` : ''}</span>`;
-      actions = `<button class="small" data-c-play="${esc(e.mp3.path)}">${t('ecouter')}</button>
-        <button class="small" data-c-dl="${esc(e.mp3.path)}" data-nom="${base}">${t('telecharger')}</button>`;
+      etat = `<span class="c-taille">${e.avant ? `${mo(e.avant)} → ` : ''}${mo(e.mp3.size)}${gain > 0 ? ` <span class="gain">−${gain} %</span>` : ''}</span>`;
+      corps = `<div class="c-actions"><button class="small" data-c-play="${esc(e.mp3.path)}">${t('ecouter')}</button>
+        <button class="small" data-c-dl="${esc(e.mp3.path)}" data-nom="${base}">${t('telecharger')}</button></div>
+        <div class="preche-pied hint" style="padding-top:0">${expire ? esc(t('supprimee_le', { d: dateLongue(expire) })) + ' · ' : ''}<button class="link" data-c-del="${esc(e.id)}">${t('supprimer')}</button></div>`;
     } else {
       const run = runDe(e.id);
       if (run && run.status === 'completed' && run.conclusion !== 'success') {
-        info = `<span class="c-info err">${t('c_echec')}</span>`;
+        etat = `<span class="c-etat err">${t('echec')}</span>`;
+        corps = `<span class="status err">${t('c_echec')}</span>
+          <div class="preche-pied hint" style="padding-top:0"><button class="link" data-c-del="${esc(e.id)}">${t('supprimer')}</button></div>`;
       } else {
-        attente = true;
+        attente = true; ouvert = true;
         const enCours = run && run.status === 'in_progress';
-        info = `<span class="c-info">${enCours ? t('c_en_cours') : t('c_attente')}</span><div class="bar indefini"><div></div></div>`;
+        etat = `<span class="c-etat">${enCours ? t('c_en_cours') : t('c_attente')}</span>`;
+        corps = `<div class="bar indefini"><div></div></div>
+          <div class="c-actions"><button class="small" data-c-annuler="${esc(e.id)}">${t('annuler')}</button></div>`;
       }
     }
-    return `<li data-id="${esc(e.id)}"><span class="c-nom">${esc(e.nom)}</span>${info}
-      <div class="c-actions">${actions}<button class="link" data-c-del="${esc(e.id)}">${t('supprimer')}</button></div></li>`;
-  }).join('');
+    return `<details class="preche" data-id="${esc(e.id)}"${ouvert ? ' open' : ''}>
+      <summary>
+        <span class="preche-date">${e.date ? esc(dateCourte(e.date)) : t('sans_date')}</span>
+        <span class="preche-titre">${esc(e.nom)}</span>
+        ${etat}
+        <svg class="chevron" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>
+      </summary>
+      <div class="preche-corps c-corps">${corps}</div>
+    </details>`;
+  }).join('')}</div>`;
   if (attente) compressionTimer = setTimeout(chargerCompresses, 10000);
+}
+
+// Fichiers d'un élément compressé (morceaux reçus, nom, taille, résultat).
+async function fichiersCompression(id) {
+  try { return (await gh(repo(`/contents/compression?ref=${BRANCH}`))).filter((f) => f.name.startsWith(id + '.')); } catch { return []; }
 }
 
 $('#compresses').addEventListener('click', async (ev) => {
   const b = ev.target.closest('button');
   if (!b) return;
-  const li = b.closest('li');
+  const bloc = b.closest('details');
   const ancien = b.textContent;
   try {
     if (b.dataset.cPlay) {
-      const existant = li.querySelector('audio');
+      const existant = bloc.querySelector('audio');
       if (existant) { existant.remove(); b.textContent = t('ecouter'); return; }
       b.textContent = t('chargement'); b.disabled = true;
       const audio = document.createElement('audio');
       audio.controls = true;
       audio.src = URL.createObjectURL(new Blob([await telecharger(b.dataset.cPlay)], { type: 'audio/mpeg' }));
-      li.append(audio);
+      b.closest('.c-actions').after(audio);
       audio.play().catch(() => {});
       b.textContent = t('fermer'); b.disabled = false;
     } else if (b.dataset.cDl) {
@@ -1514,12 +1653,19 @@ $('#compresses').addEventListener('click', async (ev) => {
       document.body.append(a); a.click(); a.remove();
       setTimeout(() => URL.revokeObjectURL(a.href), 60000);
       b.textContent = ancien; b.disabled = false;
-    } else if (b.dataset.cDel) {
-      const id = b.dataset.cDel;
-      if (!confirm(t('c_confirmer', { t: li.querySelector('.c-nom').textContent }))) return;
-      b.disabled = true; b.textContent = t('suppression');
-      const liste = (await gh(repo(`/contents/compression?ref=${BRANCH}`))).filter((f) => f.name.startsWith(id + '.'));
-      await commit(liste.map((f) => ({ path: f.path, sha: null })), `Suppression : compression/${id}`);
+    } else if (b.dataset.cDel || b.dataset.cAnnuler) {
+      const id = b.dataset.cDel || b.dataset.cAnnuler;
+      const nom = bloc.querySelector('.preche-titre').textContent;
+      if (!confirm(t(b.dataset.cAnnuler ? 'confirmer_annul_c' : 'c_confirmer', { t: nom }))) return;
+      b.disabled = true; b.textContent = b.dataset.cAnnuler ? t('annulation') : t('suppression');
+      if (b.dataset.cAnnuler) {
+        // Arrête la compression sur GitHub (si elle a déjà démarré), puis retire le fichier envoyé.
+        const { workflow_runs: runs } = await gh(repo(`/actions/workflows/${WORKFLOW_C}/runs?per_page=30`));
+        const run = runs.find((r) => (r.display_title || '').includes(`compression/${id}.`) && r.status !== 'completed');
+        if (run) await post(`/actions/runs/${run.id}/cancel`, {});
+      }
+      const liste = await fichiersCompression(id);
+      if (liste.length) await commit(liste.map((f) => ({ path: f.path, sha: null })), `Suppression : compression/${id}`);
       chargerCompresses();
     }
   } catch (e) {
@@ -1566,6 +1712,7 @@ function deverrouille() {
 function demarrer() {
   $('#verrou').hidden = true;
   $('#appli').hidden = false;
+  dessinerAutres();
   dessinerCibles();
   dessinerFichiersC();
   if (cfg.token) { chargerBibliotheque(); suivreTravaux(); chargerCompresses(); } else { ouvrirReglages(); }
