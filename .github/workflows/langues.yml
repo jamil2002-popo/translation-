@@ -1,0 +1,9 @@
+name: Liste des langues
+on: push
+jobs:
+  liste:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: pip install --quiet edge-tts requests
+      - run: python3 liste.py
