@@ -28,6 +28,10 @@ Tu déposes ton MP3 dans une page web. GitHub fait tout le travail gratuitement 
 
 **À chaque prêche :** glisse un ou plusieurs MP3 dans la page et clique sur **Traduire**. Les fichiers sont envoyés un par un, puis traduits en parallèle sur GitHub. Compte environ 1 h 30 pour 45 minutes de prêche ; la page affiche le temps restant estimé. Tu peux fermer la page et revenir plus tard.
 
+**Langues :** chinois, espagnol et russe sont cochés par défaut ; hindi, français et anglais en un clic. « Autres langues » ouvre la liste complète des 249 langues de Google Traduction (avec recherche). 79 d'entre elles ont une voix ; pour les autres, tu reçois la traduction écrite seulement. La liste est dans `langues.json`.
+
+**Annuler :** chaque traduction en cours et chaque compression a un bouton **Annuler**. Une traduction annulée n'enregistre rien ; si rien n'avait encore été traduit, le fichier envoyé est aussi supprimé.
+
 Formats acceptés : MP3, MPEG (audio ou vidéo, seule la piste audio est utilisée), M4A, WAV, OGG.
 
 **Compresser des MP3 :** la section « Compresser des MP3 » de la page est indépendante de la traduction. Dépose un ou plusieurs fichiers MP3 ou MPEG, choisis la taille du résultat, puis clique sur **Compresser**. Le workflow `compresser.yml` les convertit avec ffmpeg en MP3 plus léger : 64 kb/s mono par défaut, soit environ 29 Mo par heure. Ça prend 1 à 3 minutes par fichier. Les fichiers compressés apparaissent sous le bouton, prêts à écouter ou télécharger.
