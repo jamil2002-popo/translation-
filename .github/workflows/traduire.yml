@@ -15,8 +15,8 @@ on:
         description: "Langues cibles séparées par des espaces"
         default: "zh es ru hi"
       source:
-        description: "Langue parlée dans la prêche"
-        default: "en"
+        description: "Langue parlée dans la prêche (auto = reconnue automatiquement, ou en, fr…)"
+        default: "auto"
       modele:
         description: "Modèle Whisper (base, small, medium)"
         default: "small"
@@ -39,7 +39,7 @@ concurrency:
 env:
   FICHIER: ${{ inputs.fichier }}
   LANGUES: ${{ inputs.langues }}
-  SOURCE: ${{ inputs.source }}
+  SOURCE: ${{ inputs.source || 'auto' }}
   MODELE: ${{ inputs.modele }}
   REFAIRE: ${{ inputs.refaire || 'non' }}
   PYTHONUNBUFFERED: "1"
@@ -52,6 +52,7 @@ jobs:
     outputs:
       nom: ${{ steps.transcrire.outputs.nom }}
       matrice: ${{ steps.transcrire.outputs.matrice }}
+      source: ${{ steps.transcrire.outputs.source }}
     steps:
       - name: Préparation
         uses: actions/checkout@v4
@@ -92,6 +93,9 @@ jobs:
           NOM="$(basename "$FICHIER")"; NOM="${NOM%.*}"
           python traduire_preche.py "preches/$FICHIER" --transcription-seule \
             --source "$SOURCE" --modele "$MODELE" --sortie "preches/resultats/$NOM"
+          # Langue reconnue par Whisper (ou celle choisie), notée par le programme.
+          SOURCE="$(cat "preches/resultats/$NOM/$NOM.source")"
+          echo "Langue de la prêche : $SOURCE"
           # Une tâche par langue, sauf celles déjà terminées (MP3 présent) lors d'un essai précédent.
           MATRICE=$(NOM="$NOM" python3 - <<'PY'
           import json, os
@@ -114,12 +118,15 @@ jobs:
           echo "Langues à faire : $MATRICE"
           echo "nom=$NOM" >> "$GITHUB_OUTPUT"
           echo "matrice=$MATRICE" >> "$GITHUB_OUTPUT"
+          echo "source=$SOURCE" >> "$GITHUB_OUTPUT"
 
       - name: Envoi de la transcription aux autres serveurs
         uses: actions/upload-artifact@v4
         with:
           name: textes
-          path: preches/resultats/${{ steps.transcrire.outputs.nom }}/*.txt
+          path: |
+            preches/resultats/${{ steps.transcrire.outputs.nom }}/*.txt
+            preches/resultats/${{ steps.transcrire.outputs.nom }}/*.source
           retention-days: 2
 
   langue:
@@ -161,7 +168,7 @@ jobs:
           MOTEUR=google
           if [ -n "$GEMINI_API_KEY" ]; then MOTEUR=gemini; fi
           python traduire_preche.py "entrees/$NOM.mp3" --langues ${{ matrix.code }} \
-            --source "$SOURCE" --moteur "$MOTEUR" --sortie "sortie/$NOM"
+            --source "${{ needs.transcription.outputs.source }}" --moteur "$MOTEUR" --sortie "sortie/$NOM"
 
       - name: Envoi du résultat
         if: always()

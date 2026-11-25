@@ -81,7 +81,13 @@ def lire_audio(audio: Path):
     return np.frombuffer(brut, np.int16).astype(np.float32) / 32768.0
 
 
-def transcrire(audio: Path, modele: str, langue_source: str) -> str:
+# Codes Whisper différents des nôtres
+WHISPER_VERS_INTERNE = {"jw": "jv"}
+
+
+def transcrire(audio: Path, modele: str, langue_source: str | None) -> tuple[str, str]:
+    """Transcrit l'audio. langue_source=None : Whisper reconnaît la langue tout seul.
+    Renvoie le texte et le code de la langue parlée."""
     from faster_whisper import WhisperModel
 
     print(f"[1/3] Transcription de {audio.name} (modèle Whisper « {modele} »)…")
@@ -99,7 +105,11 @@ def transcrire(audio: Path, modele: str, langue_source: str) -> str:
               f"{int(info.duration) // 60:02d}:{int(info.duration) % 60:02d}",
               end="", flush=True)
     print()
-    return " ".join(morceaux)
+    langue = WHISPER_VERS_INTERNE.get(info.language, info.language)
+    if not langue_source:
+        print(f"      Langue reconnue : {NOMS_ANGLAIS.get(langue, langue)} "
+              f"(certitude {info.language_probability:.0%})")
+    return " ".join(morceaux), langue
 
 
 # --------------------------------------------------------------------------
@@ -132,6 +142,9 @@ def decouper(texte: str, taille: int = TAILLE_MORCEAU) -> list[str]:
 def traduire_gtx(texte: str, source: str, cible: str) -> str:
     """Google Traduction via translate.googleapis.com (gratuit, sans clé)."""
     import requests
+
+    if source in LANGUES:  # code interne (zh, he…) -> code Google (zh-CN, iw…)
+        source = LANGUES[source][0]
 
     url = "https://translate.googleapis.com/translate_a/single"
     resultat = []
@@ -431,7 +444,7 @@ def traduire_phrase(phrase: str, source: str, langue: str) -> str:
 
 def reparer(traduction: str, source: str, langue: str) -> tuple[str, int]:
     """Retraduit les phrases restées en anglais. Renvoie le texte et le nombre de phrases réparées."""
-    if langue == source:
+    if langue == source or source != "en":
         return traduction, 0
     # Découpe en gardant la ponctuation (le chinois n'a pas d'espace entre les phrases).
     morceaux = re.split(r"(?<=[.!?。！？।])", traduction)
@@ -640,12 +653,26 @@ async def lire_a_voix_haute(texte: str, langue: str, preferee: str, sortie: Path
 # --------------------------------------------------------------------------
 # Programme principal
 # --------------------------------------------------------------------------
+def source_deja_connue(dossier: Path, nom: str) -> str | None:
+    """Langue de la prêche si elle a déjà été transcrite : notée dans <nom>.source,
+    ou, pour les anciennes prêches, le texte sans MP3 d'une langue qui a une voix."""
+    marque = dossier / f"{nom}.source"
+    if marque.exists():
+        return marque.read_text(encoding="utf-8").strip() or None
+    for txt in sorted(dossier.glob(f"{nom}.*.txt")):
+        code = txt.name[len(nom) + 1:-4]
+        if code in LANGUES and LANGUES[code][2] and not (dossier / f"{nom}.{code}.mp3").exists():
+            return code
+    return None
+
+
 def main() -> int:
     p = argparse.ArgumentParser(description="Traduit une prêche MP3 en plusieurs langues.")
     p.add_argument("audio", type=Path, help="Fichier audio de la prêche (MP3, WAV, M4A…)")
     p.add_argument("--langues", nargs="+", default=LANGUES_PAR_DEFAUT,
                    choices=sorted(LANGUES), help="Langues cibles (défaut : zh es ru ; liste complète dans langues.json)")
-    p.add_argument("--source", default="en", help="Langue parlée dans la prêche (défaut : en)")
+    p.add_argument("--source", default="auto",
+                   help="Langue parlée dans la prêche, ex. en ou fr (défaut : auto, reconnue par Whisper)")
     p.add_argument("--modele", default="small",
                    help="Modèle Whisper : tiny, base, small, medium, large-v3 (défaut : small)")
     p.add_argument("--moteur", choices=["google", "gemini"], default="google",
@@ -667,23 +694,33 @@ def main() -> int:
     dossier = args.sortie or Path("sortie") / args.audio.stem
     dossier.mkdir(parents=True, exist_ok=True)
 
-    # 1. Transcription (réutilisée si déjà faite)
+    # 1. Transcription (réutilisée si déjà faite). La langue reconnue est notée
+    #    dans <nom>.source pour les étapes suivantes.
+    marque = dossier / f"{args.audio.stem}.source"
+    if args.source == "auto":
+        args.source = source_deja_connue(dossier, args.audio.stem) or "auto"
     fichier_transcription = dossier / f"{args.audio.stem}.{args.source}.txt"
-    if fichier_transcription.exists():
+    if args.source != "auto" and fichier_transcription.exists():
         print(f"[1/3] Transcription déjà faite : {fichier_transcription}")
         texte = fichier_transcription.read_text(encoding="utf-8")
     else:
         if not args.audio.exists():
             print(f"Fichier introuvable : {args.audio}")
             return 1
-        texte = transcrire(args.audio, args.modele, args.source)
+        texte, args.source = transcrire(args.audio, args.modele,
+                                        None if args.source == "auto" else args.source)
+        fichier_transcription = dossier / f"{args.audio.stem}.{args.source}.txt"
         fichier_transcription.write_text(texte, encoding="utf-8")
         print(f"      → {fichier_transcription}")
+    marque.write_text(args.source, encoding="utf-8")
     if args.transcription_seule:
         return 0
 
     echecs = []
     for langue in args.langues:
+        if langue == args.source:
+            print(f"\n{LANGUES.get(langue, (0, langue))[1]} : langue de la prêche, rien à traduire.")
+            continue
         nom = LANGUES[langue][1]
         print(f"\n=== {nom.upper()} ===")
         try:

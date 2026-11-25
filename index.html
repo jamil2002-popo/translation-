@@ -96,8 +96,15 @@
   .grille { display: grid; gap: 20px; align-items: start; }
   .colonne { display: grid; gap: 20px; min-width: 0; }
   @media (min-width: 900px) {
-    .grille { grid-template-columns: 360px minmax(0, 1fr); }
+    .grille { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 0; }
+    .grille > .colonne:first-child { padding-right: 24px; }
+    .grille > .colonne + .colonne { padding-left: 24px; border-left: 1px solid var(--line); align-self: stretch; align-content: start; }
   }
+  @media (max-width: 899px) { .grille > .colonne + .colonne { margin-top: 12px; padding-top: 24px; border-top: 1px solid var(--line); } }
+  .col-tete { display: grid; gap: 2px; padding: 2px 2px 0; }
+  .col-tete h2 { margin: 0; font-size: 18px; font-weight: 600; letter-spacing: -0.01em; display: flex; align-items: center; gap: 10px; }
+  .col-tete h2::before { content: ""; width: 4px; height: 18px; border-radius: 2px; background: var(--accent); }
+  .col-tete .hint { margin: 0; padding-left: 14px; }
 
   .panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); min-width: 0; }
   .panel-tete { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; padding: 14px 20px; border-bottom: 1px solid var(--line); }
@@ -194,6 +201,8 @@
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M2.5 6.2 5 8.5l4.5-5' fill='none' stroke='white' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
   }
   .cible input:focus-visible + span { outline: 2px solid var(--accent); outline-offset: 1px; }
+  .auto-langue { margin: 0; padding: 10px 12px; border-radius: 8px; background: var(--surface-2); border: 1px solid var(--line); }
+  .auto-langue strong { color: var(--ink); font-weight: 500; }
   .autres { border: 1px solid var(--line); border-radius: 8px; background: var(--surface-2); }
   .autres summary { cursor: pointer; padding: 9px 12px; font-size: 14px; font-weight: 500; display: flex; gap: 8px; align-items: baseline; }
   .autres[open] summary { border-bottom: 1px solid var(--line); }
@@ -355,9 +364,14 @@
   </section>
 
   <div class="grille">
-    <div class="colonne">
-    <!-- Envoi -->
-    <section id="upload" class="panel envoi" aria-labelledby="t-envoi">
+    <!-- Côté gauche : tout ce qui concerne la traduction -->
+    <div class="colonne" role="region" aria-labelledby="col-trad">
+      <div class="col-tete">
+        <h2 id="col-trad" data-i18n="col_trad">Traduction des prêches</h2>
+        <p class="hint" data-i18n="col_trad_aide">Dépose une prêche : elle est traduite et lue à voix haute dans les langues choisies.</p>
+      </div>
+      <!-- Envoi -->
+      <section id="upload" class="panel envoi" aria-labelledby="t-envoi">
       <div class="panel-tete"><h2 id="t-envoi" data-i18n="nouvelle">Nouvelle traduction</h2></div>
       <div class="panel-corps">
         <div id="drop" class="drop" tabindex="0" role="button" aria-label="Choisir des fichiers audio">
@@ -370,13 +384,7 @@
         </div>
         <ul id="liste" class="liste"></ul>
 
-        <div class="champ">
-          <span class="etiquette" id="l-source" data-i18n="langue_preche">Langue de la prêche</span>
-          <div class="segment" id="source" role="radiogroup" aria-labelledby="l-source">
-            <label><input type="radio" name="source" value="en" checked><span data-i18n="l_en">Anglais</span></label>
-            <label><input type="radio" name="source" value="fr"><span data-i18n="l_fr">Français</span></label>
-          </div>
-        </div>
+        <p class="hint auto-langue" data-i18n-html="langue_auto"><strong>Langue de la prêche :</strong> reconnue automatiquement (anglais, français ou toute autre langue).</p>
 
         <div class="champ">
           <span class="etiquette" id="l-cibles" data-i18n="traduire_en">Traduire en</span>
@@ -404,10 +412,29 @@
         </div>
         <div id="upload-msg"></div>
       </div>
-    </section>
+      </section>
 
-    <!-- Compression de MP3 (indépendante de la traduction) -->
-    <section id="compression" class="panel" aria-labelledby="t-compression">
+      <!-- Traductions en cours -->
+      <section id="jobs-wrap" class="panel" hidden aria-labelledby="t-jobs">
+        <div class="panel-tete"><h2 id="t-jobs" data-i18n="en_cours">En cours</h2><span id="jobs-count" class="compte"></span></div>
+        <div id="jobs"></div>
+      </section>
+
+      <!-- Bibliothèque -->
+      <section class="panel" aria-labelledby="t-lib">
+        <div class="panel-tete"><h2 id="t-lib" data-i18n="traduites">Prêches traduites</h2><span id="lib-count" class="compte"></span></div>
+        <div id="library"><div class="vide">Connecte-toi dans les réglages pour voir tes prêches.</div></div>
+      </section>
+    </div>
+
+    <!-- Côté droit : tout ce qui concerne la compression -->
+    <div class="colonne" role="region" aria-labelledby="col-comp">
+      <div class="col-tete">
+        <h2 id="col-comp" data-i18n="col_comp">Compression de MP3</h2>
+        <p class="hint" data-i18n="col_comp_aide">Rend un fichier audio plus léger, sans le traduire.</p>
+      </div>
+      <!-- Compression de MP3 (indépendante de la traduction) -->
+      <section id="compression" class="panel" aria-labelledby="t-compression">
       <div class="panel-tete"><h2 id="t-compression" data-i18n="c_titre">Compresser des MP3</h2></div>
       <div class="panel-corps">
         <div id="drop-c" class="drop compact" tabindex="0" role="button" aria-label="Choisir des fichiers à compresser">
@@ -435,20 +462,6 @@
         </div>
         <div id="c-msg"></div>
       </div>
-    </section>
-    </div>
-
-    <div class="colonne">
-      <!-- Traductions en cours -->
-      <section id="jobs-wrap" class="panel" hidden aria-labelledby="t-jobs">
-        <div class="panel-tete"><h2 id="t-jobs" data-i18n="en_cours">En cours</h2><span id="jobs-count" class="compte"></span></div>
-        <div id="jobs"></div>
-      </section>
-
-      <!-- Bibliothèque -->
-      <section class="panel" aria-labelledby="t-lib">
-        <div class="panel-tete"><h2 id="t-lib" data-i18n="traduites">Prêches traduites</h2><span id="lib-count" class="compte"></span></div>
-        <div id="library"><div class="vide">Connecte-toi dans les réglages pour voir tes prêches.</div></div>
       </section>
 
       <!-- Fichiers compressés -->
@@ -510,6 +523,9 @@ const TEXTES = {
     c_envoi: 'Envoi de « {nom} »… {p} %', c_envoyes: '{ok} fichier(s) sur {n} envoyé(s). La compression continue sur GitHub, même si tu fermes la page.',
     c_attente: "En attente d'un serveur GitHub…", c_en_cours: 'Compression en cours…', c_echec: 'La compression a échoué. Supprime-le et renvoie le fichier.',
     c_supprime_le: 'supprimé le {d}', c_confirmer: 'Supprimer « {t} » ?',
+    col_trad: 'Traduction des prêches', col_trad_aide: 'Dépose une prêche : elle est traduite et lue à voix haute dans les langues choisies.',
+    col_comp: 'Compression de MP3', col_comp_aide: 'Rend un fichier audio plus léger, sans le traduire.',
+    langue_auto: '<strong>Langue de la prêche :</strong> reconnue automatiquement (anglais, français ou toute autre langue). Si elle fait partie des langues cochées, elle est simplement ignorée.',
     autres_langues: 'Autres langues', chercher_langue: 'Chercher une langue…', texte_seul: 'texte seulement', n_choisies: '{n} choisie(s)',
     sans_voix_aide: "« texte seulement » : aucune voix n'existe pour cette langue, tu recevras la traduction écrite.",
     annuler: 'Annuler', annulation: 'Annulation…', confirmer_annul: 'Annuler la traduction de « {t} » ?', confirmer_annul_c: 'Annuler la compression de « {t} » ?',
@@ -562,6 +578,9 @@ const TEXTES = {
     c_envoi: 'Uploading “{nom}”… {p}%', c_envoyes: '{ok} of {n} file(s) uploaded. Compression continues on GitHub, even if you close the page.',
     c_attente: 'Waiting for a GitHub server…', c_en_cours: 'Compressing…', c_echec: 'Compression failed. Delete it and upload the file again.',
     c_supprime_le: 'deleted on {d}', c_confirmer: 'Delete “{t}”?',
+    col_trad: 'Sermon translation', col_trad_aide: 'Drop a sermon: it is translated and read aloud in the chosen languages.',
+    col_comp: 'MP3 compression', col_comp_aide: 'Makes an audio file smaller, without translating it.',
+    langue_auto: '<strong>Sermon language:</strong> detected automatically (English, French or any other language). If it is one of the checked languages, it is simply skipped.',
     autres_langues: 'More languages', chercher_langue: 'Search a language…', texte_seul: 'text only', n_choisies: '{n} selected',
     sans_voix_aide: '“text only”: no voice exists for this language, you will get the written translation.',
     annuler: 'Cancel', annulation: 'Cancelling…', confirmer_annul: 'Cancel the translation of “{t}”?', confirmer_annul_c: 'Cancel the compression of “{t}”?',
@@ -719,10 +738,9 @@ let envoiEnCours = false;
 const TEXTE_DROP = t('drop_sub');
 
 function dessinerCibles() {
-  const source = document.querySelector('input[name=source]:checked').value;
   const coches = new Set([...document.querySelectorAll('#cibles input:checked')].map((i) => i.value));
   const premiere = !$('#cibles').children.length;
-  $('#cibles').innerHTML = CIBLES.filter((l) => l !== source).map((l) => {
+  $('#cibles').innerHTML = CIBLES.map((l) => {
     const on = premiere ? PAR_DEFAUT.includes(l) : coches.has(l);
     return `<label class="cible"><input type="checkbox" value="${l}" ${on ? 'checked' : ''}><span>${LANGS[l]}${NATIF[l] !== LANGS[l] ? `<small class="natif">${NATIF[l]}</small>` : ''}</span></label>`;
   }).join('');
@@ -865,7 +883,7 @@ async function lancer() {
   if (!cfg.token) { ouvrirReglages(); return; }
   const reglages = {
     langues: languesChoisies().join(' '),
-    source: document.querySelector('input[name=source]:checked').value,
+    source: 'auto', // Whisper reconnaît la langue parlée
     modele: $('#modele').value,
   };
   const aEnvoyer = fichiers;
@@ -1452,7 +1470,6 @@ $('#liste').addEventListener('click', (e) => {
   const b = e.target.closest('[data-retirer]');
   if (b) { fichiers.splice(+b.dataset.retirer, 1); dessinerFichiers(); }
 });
-document.querySelectorAll('input[name=source]').forEach((r) => (r.onchange = dessinerCibles));
 $('#cibles').addEventListener('change', majBouton);
 $('#autres-liste').addEventListener('change', majBouton);
 $('#autres-filtre').addEventListener('input', (e) => {
