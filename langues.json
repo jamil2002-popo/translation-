@@ -23,8 +23,7 @@
   "google": "af",
   "nom": "Afrikaans",
   "voix": [
-   "af-ZA-WillemNeural",
-   "af-ZA-AdriNeural"
+   "af-ZA-WillemNeural"
   ]
  },
  "ak": {
@@ -41,8 +40,7 @@
   "google": "am",
   "nom": "Amharic",
   "voix": [
-   "am-ET-AmehaNeural",
-   "am-ET-MekdesNeural"
+   "am-ET-AmehaNeural"
   ]
  },
  "ar": {
@@ -50,9 +48,7 @@
   "nom": "Arabic",
   "voix": [
    "ar-SA-HamedNeural",
-   "ar-SA-ZariyahNeural",
-   "ar-EG-ShakirNeural",
-   "ar-EG-SalmaNeural"
+   "ar-EG-ShakirNeural"
   ]
  },
  "as": {
@@ -79,8 +75,7 @@
   "google": "az",
   "nom": "Azerbaijani",
   "voix": [
-   "az-AZ-BabekNeural",
-   "az-AZ-BanuNeural"
+   "az-AZ-BabekNeural"
   ]
  },
  "ba": {
@@ -137,8 +132,7 @@
   "google": "bg",
   "nom": "Bulgarian",
   "voix": [
-   "bg-BG-BorislavNeural",
-   "bg-BG-KalinaNeural"
+   "bg-BG-BorislavNeural"
   ]
  },
  "bho": {
@@ -166,9 +160,7 @@
   "nom": "Bengali",
   "voix": [
    "bn-BD-PradeepNeural",
-   "bn-BD-NabanitaNeural",
-   "bn-IN-BashkarNeural",
-   "bn-IN-TanishaaNeural"
+   "bn-IN-BashkarNeural"
   ]
  },
  "bo": {
@@ -185,8 +177,7 @@
   "google": "bs",
   "nom": "Bosnian",
   "voix": [
-   "bs-BA-GoranNeural",
-   "bs-BA-VesnaNeural"
+   "bs-BA-GoranNeural"
   ]
  },
  "bts": {
@@ -208,8 +199,7 @@
   "google": "ca",
   "nom": "Catalan",
   "voix": [
-   "ca-ES-EnricNeural",
-   "ca-ES-JoanaNeural"
+   "ca-ES-EnricNeural"
   ]
  },
  "ce": {
@@ -276,8 +266,7 @@
   "google": "cs",
   "nom": "Czech",
   "voix": [
-   "cs-CZ-AntoninNeural",
-   "cs-CZ-VlastaNeural"
+   "cs-CZ-AntoninNeural"
   ]
  },
  "cv": {
@@ -289,24 +278,21 @@
   "google": "cy",
   "nom": "Welsh",
   "voix": [
-   "cy-GB-AledNeural",
-   "cy-GB-NiaNeural"
+   "cy-GB-AledNeural"
   ]
  },
  "da": {
   "google": "da",
   "nom": "Danish",
   "voix": [
-   "da-DK-JeppeNeural",
-   "da-DK-ChristelNeural"
+   "da-DK-JeppeNeural"
   ]
  },
  "de": {
   "google": "de",
   "nom": "German",
   "voix": [
-   "de-DE-ChristophNeural",
-   "de-DE-TanjaNeural"
+   "de-DE-ChristophNeural"
   ]
  },
  "din": {
@@ -348,8 +334,7 @@
   "google": "el",
   "nom": "Greek",
   "voix": [
-   "el-GR-NestorasNeural",
-   "el-GR-AthinaNeural"
+   "el-GR-NestorasNeural"
   ]
  },
  "en": {
@@ -372,17 +357,15 @@
   "nom": "Spanish",
   "voix": [
    "es-MX-JorgeNeural",
-   "es-MX-DaliaNeural",
    "es-US-AlonsoNeural",
-   "es-US-PalomaNeural"
+   "es-ES-AlvaroNeural"
   ]
  },
  "et": {
   "google": "et",
   "nom": "Estonian",
   "voix": [
-   "et-EE-KertNeural",
-   "et-EE-AnuNeural"
+   "et-EE-KertNeural"
   ]
  },
  "eu": {
@@ -394,8 +377,7 @@
   "google": "fa",
   "nom": "Persian",
   "voix": [
-   "fa-IR-FaridNeural",
-   "fa-IR-DilaraNeural"
+   "fa-IR-FaridNeural"
   ]
  },
  "fa-AF": {
@@ -412,8 +394,7 @@
   "google": "fi",
   "nom": "Finnish",
   "voix": [
-   "fi-FI-HarriNeural",
-   "fi-FI-NooraNeural"
+   "fi-FI-HarriNeural"
   ]
  },
  "fj": {
@@ -436,9 +417,9 @@
   "nom": "French",
   "voix": [
    "fr-FR-HenriNeural",
-   "fr-FR-DeniseNeural",
-   "fr-FR-EloiseNeural",
-   "fr-CA-ThierryNeural"
+   "fr-CA-ThierryNeural",
+   "fr-CA-AntoineNeural",
+   "fr-CA-JeanNeural"
   ]
  },
  "fr-CA": {
@@ -447,8 +428,7 @@
   "voix": [
    "fr-CA-ThierryNeural",
    "fr-CA-AntoineNeural",
-   "fr-CA-JeanNeural",
-   "fr-CA-SylvieNeural"
+   "fr-CA-JeanNeural"
   ]
  },
  "fur": {
@@ -465,8 +445,7 @@
   "google": "ga",
   "nom": "Irish",
   "voix": [
-   "ga-IE-ColmNeural",
-   "ga-IE-OrlaNeural"
+   "ga-IE-ColmNeural"
   ]
  },
  "gaa": {
@@ -483,8 +462,7 @@
   "google": "gl",
   "nom": "Galician",
   "voix": [
-   "gl-ES-RoiNeural",
-   "gl-ES-SabelaNeural"
+   "gl-ES-RoiNeural"
   ]
  },
  "gn": {
@@ -501,8 +479,7 @@
   "google": "gu",
   "nom": "Gujarati",
   "voix": [
-   "gu-IN-NiranjanNeural",
-   "gu-IN-DhwaniNeural"
+   "gu-IN-NiranjanNeural"
   ]
  },
  "gv": {
@@ -524,16 +501,14 @@
   "google": "iw",
   "nom": "Hebrew",
   "voix": [
-   "he-IL-AvriNeural",
-   "he-IL-HilaNeural"
+   "he-IL-AvriNeural"
   ]
  },
  "hi": {
   "google": "hi",
   "nom": "Hindi",
   "voix": [
-   "hi-IN-MadhurNeural",
-   "hi-IN-SwaraNeural"
+   "hi-IN-MadhurNeural"
   ]
  },
  "hil": {
@@ -550,8 +525,7 @@
   "google": "hr",
   "nom": "Croatian",
   "voix": [
-   "hr-HR-SreckoNeural",
-   "hr-HR-GabrijelaNeural"
+   "hr-HR-SreckoNeural"
   ]
  },
  "hrx": {
@@ -568,8 +542,7 @@
   "google": "hu",
   "nom": "Hungarian",
   "voix": [
-   "hu-HU-TamasNeural",
-   "hu-HU-NoemiNeural"
+   "hu-HU-TamasNeural"
   ]
  },
  "hy": {
@@ -586,8 +559,7 @@
   "google": "id",
   "nom": "Indonesian",
   "voix": [
-   "id-ID-ArdiNeural",
-   "id-ID-GadisNeural"
+   "id-ID-ArdiNeural"
   ]
  },
  "ig": {
@@ -604,25 +576,21 @@
   "google": "is",
   "nom": "Icelandic",
   "voix": [
-   "is-IS-GunnarNeural",
-   "is-IS-GudrunNeural"
+   "is-IS-GunnarNeural"
   ]
  },
  "it": {
   "google": "it",
   "nom": "Italian",
   "voix": [
-   "it-IT-DiegoNeural",
-   "it-IT-ElsaNeural",
-   "it-IT-IsabellaNeural"
+   "it-IT-DiegoNeural"
   ]
  },
  "iu": {
   "google": "iu",
   "nom": "Inuktut (Syllabics)",
   "voix": [
-   "iu-Cans-CA-TaqqiqNeural",
-   "iu-Cans-CA-SiqiniqNeural"
+   "iu-Cans-CA-TaqqiqNeural"
   ]
  },
  "iu-Latn": {
@@ -634,8 +602,7 @@
   "google": "ja",
   "nom": "Japanese",
   "voix": [
-   "ja-JP-KeitaNeural",
-   "ja-JP-NanamiNeural"
+   "ja-JP-KeitaNeural"
   ]
  },
  "jam": {
@@ -647,16 +614,14 @@
   "google": "jw",
   "nom": "Javanese",
   "voix": [
-   "jv-ID-DimasNeural",
-   "jv-ID-SitiNeural"
+   "jv-ID-DimasNeural"
   ]
  },
  "ka": {
   "google": "ka",
   "nom": "Georgian",
   "voix": [
-   "ka-GE-GiorgiNeural",
-   "ka-GE-EkaNeural"
+   "ka-GE-GiorgiNeural"
   ]
  },
  "kac": {
@@ -683,8 +648,7 @@
   "google": "kk",
   "nom": "Kazakh",
   "voix": [
-   "kk-KZ-DauletNeural",
-   "kk-KZ-AigulNeural"
+   "kk-KZ-DauletNeural"
   ]
  },
  "kl": {
@@ -696,24 +660,21 @@
   "google": "km",
   "nom": "Khmer",
   "voix": [
-   "km-KH-PisethNeural",
-   "km-KH-SreymomNeural"
+   "km-KH-PisethNeural"
   ]
  },
  "kn": {
   "google": "kn",
   "nom": "Kannada",
   "voix": [
-   "kn-IN-GaganNeural",
-   "kn-IN-SapnaNeural"
+   "kn-IN-GaganNeural"
   ]
  },
  "ko": {
   "google": "ko",
   "nom": "Korean",
   "voix": [
-   "ko-KR-InJoonNeural",
-   "ko-KR-SunHiNeural"
+   "ko-KR-InJoonNeural"
   ]
  },
  "kr": {
@@ -785,16 +746,14 @@
   "google": "lo",
   "nom": "Lao",
   "voix": [
-   "lo-LA-ChanthavongNeural",
-   "lo-LA-KeomanyNeural"
+   "lo-LA-ChanthavongNeural"
   ]
  },
  "lt": {
   "google": "lt",
   "nom": "Lithuanian",
   "voix": [
-   "lt-LT-LeonasNeural",
-   "lt-LT-OnaNeural"
+   "lt-LT-LeonasNeural"
   ]
  },
  "ltg": {
@@ -821,8 +780,7 @@
   "google": "lv",
   "nom": "Latvian",
   "voix": [
-   "lv-LV-NilsNeural",
-   "lv-LV-EveritaNeural"
+   "lv-LV-NilsNeural"
   ]
  },
  "mad": {
@@ -874,24 +832,21 @@
   "google": "mk",
   "nom": "Macedonian",
   "voix": [
-   "mk-MK-AleksandarNeural",
-   "mk-MK-MarijaNeural"
+   "mk-MK-AleksandarNeural"
   ]
  },
  "ml": {
   "google": "ml",
   "nom": "Malayalam",
   "voix": [
-   "ml-IN-MidhunNeural",
-   "ml-IN-SobhanaNeural"
+   "ml-IN-MidhunNeural"
   ]
  },
  "mn": {
   "google": "mn",
   "nom": "Mongolian",
   "voix": [
-   "mn-MN-BataaNeural",
-   "mn-MN-YesuiNeural"
+   "mn-MN-BataaNeural"
   ]
  },
  "mni-Mtei": {
@@ -903,16 +858,14 @@
   "google": "mr",
   "nom": "Marathi",
   "voix": [
-   "mr-IN-ManoharNeural",
-   "mr-IN-AarohiNeural"
+   "mr-IN-ManoharNeural"
   ]
  },
  "ms": {
   "google": "ms",
   "nom": "Malay",
   "voix": [
-   "ms-MY-OsmanNeural",
-   "ms-MY-YasminNeural"
+   "ms-MY-OsmanNeural"
   ]
  },
  "ms-Arab": {
@@ -924,8 +877,7 @@
   "google": "mt",
   "nom": "Maltese",
   "voix": [
-   "mt-MT-JosephNeural",
-   "mt-MT-GraceNeural"
+   "mt-MT-JosephNeural"
   ]
  },
  "mwr": {
@@ -937,8 +889,7 @@
   "google": "my",
   "nom": "Myanmar (Burmese)",
   "voix": [
-   "my-MM-ThihaNeural",
-   "my-MM-NilarNeural"
+   "my-MM-ThihaNeural"
   ]
  },
  "ndc-ZW": {
@@ -950,8 +901,7 @@
   "google": "ne",
   "nom": "Nepali",
   "voix": [
-   "ne-NP-SagarNeural",
-   "ne-NP-HemkalaNeural"
+   "ne-NP-SagarNeural"
   ]
  },
  "new": {
@@ -968,17 +918,14 @@
   "google": "nl",
   "nom": "Dutch",
   "voix": [
-   "nl-NL-MaartenNeural",
-   "nl-NL-ColetteNeural",
-   "nl-NL-FennaNeural"
+   "nl-NL-MaartenNeural"
   ]
  },
  "no": {
   "google": "no",
   "nom": "Norwegian",
   "voix": [
-   "nb-NO-FinnNeural",
-   "nb-NO-PernilleNeural"
+   "nb-NO-FinnNeural"
   ]
  },
  "nr": {
@@ -1050,16 +997,14 @@
   "google": "pl",
   "nom": "Polish",
   "voix": [
-   "pl-PL-MarekNeural",
-   "pl-PL-ZofiaNeural"
+   "pl-PL-MarekNeural"
   ]
  },
  "ps": {
   "google": "ps",
   "nom": "Pashto",
   "voix": [
-   "ps-AF-GulNawazNeural",
-   "ps-AF-LatifaNeural"
+   "ps-AF-GulNawazNeural"
   ]
  },
  "pt": {
@@ -1067,17 +1012,14 @@
   "nom": "Portuguese (Brazil)",
   "voix": [
    "pt-BR-AntonioNeural",
-   "pt-BR-FranciscaNeural",
-   "pt-PT-DuarteNeural",
-   "pt-PT-RaquelNeural"
+   "pt-PT-DuarteNeural"
   ]
  },
  "pt-PT": {
   "google": "pt-PT",
   "nom": "Portuguese (Portugal)",
   "voix": [
-   "pt-PT-DuarteNeural",
-   "pt-PT-RaquelNeural"
+   "pt-PT-DuarteNeural"
   ]
  },
  "qu": {
@@ -1094,8 +1036,7 @@
   "google": "ro",
   "nom": "Romanian",
   "voix": [
-   "ro-RO-EmilNeural",
-   "ro-RO-AlinaNeural"
+   "ro-RO-EmilNeural"
   ]
  },
  "rom": {
@@ -1107,8 +1048,7 @@
   "google": "ru",
   "nom": "Russian",
   "voix": [
-   "ru-RU-DmitryNeural",
-   "ru-RU-SvetlanaNeural"
+   "ru-RU-DmitryNeural"
   ]
  },
  "rw": {
@@ -1165,24 +1105,21 @@
   "google": "si",
   "nom": "Sinhala",
   "voix": [
-   "si-LK-SameeraNeural",
-   "si-LK-ThiliniNeural"
+   "si-LK-SameeraNeural"
   ]
  },
  "sk": {
   "google": "sk",
   "nom": "Slovak",
   "voix": [
-   "sk-SK-LukasNeural",
-   "sk-SK-ViktoriaNeural"
+   "sk-SK-LukasNeural"
   ]
  },
  "sl": {
   "google": "sl",
   "nom": "Slovenian",
   "voix": [
-   "sl-SI-RokNeural",
-   "sl-SI-PetraNeural"
+   "sl-SI-RokNeural"
   ]
  },
  "sm": {
@@ -1199,24 +1136,21 @@
   "google": "so",
   "nom": "Somali",
   "voix": [
-   "so-SO-MuuseNeural",
-   "so-SO-UbaxNeural"
+   "so-SO-MuuseNeural"
   ]
  },
  "sq": {
   "google": "sq",
   "nom": "Albanian",
   "voix": [
-   "sq-AL-IlirNeural",
-   "sq-AL-AnilaNeural"
+   "sq-AL-IlirNeural"
   ]
  },
  "sr": {
   "google": "sr",
   "nom": "Serbian",
   "voix": [
-   "sr-RS-NicholasNeural",
-   "sr-RS-SophieNeural"
+   "sr-RS-NicholasNeural"
   ]
  },
  "ss": {
@@ -1233,8 +1167,7 @@
   "google": "su",
   "nom": "Sundanese",
   "voix": [
-   "su-ID-JajangNeural",
-   "su-ID-TutiNeural"
+   "su-ID-JajangNeural"
   ]
  },
  "sus": {
@@ -1246,8 +1179,7 @@
   "google": "sv",
   "nom": "Swedish",
   "voix": [
-   "sv-SE-MattiasNeural",
-   "sv-SE-SofieNeural"
+   "sv-SE-MattiasNeural"
   ]
  },
  "sw": {
@@ -1255,9 +1187,7 @@
   "nom": "Swahili",
   "voix": [
    "sw-KE-RafikiNeural",
-   "sw-KE-ZuriNeural",
-   "sw-TZ-DaudiNeural",
-   "sw-TZ-RehemaNeural"
+   "sw-TZ-DaudiNeural"
   ]
  },
  "szl": {
@@ -1269,8 +1199,7 @@
   "google": "ta",
   "nom": "Tamil",
   "voix": [
-   "ta-IN-ValluvarNeural",
-   "ta-IN-PallaviNeural"
+   "ta-IN-ValluvarNeural"
   ]
  },
  "tcy": {
@@ -1282,8 +1211,7 @@
   "google": "te",
   "nom": "Telugu",
   "voix": [
-   "te-IN-MohanNeural",
-   "te-IN-ShrutiNeural"
+   "te-IN-MohanNeural"
   ]
  },
  "tet": {
@@ -1300,8 +1228,7 @@
   "google": "th",
   "nom": "Thai",
   "voix": [
-   "th-TH-NiwatNeural",
-   "th-TH-PremwadeeNeural"
+   "th-TH-NiwatNeural"
   ]
  },
  "ti": {
@@ -1323,8 +1250,7 @@
   "google": "tl",
   "nom": "Filipino",
   "voix": [
-   "fil-PH-AngeloNeural",
-   "fil-PH-BlessicaNeural"
+   "fil-PH-AngeloNeural"
   ]
  },
  "tn": {
@@ -1346,8 +1272,7 @@
   "google": "tr",
   "nom": "Turkish",
   "voix": [
-   "tr-TR-AhmetNeural",
-   "tr-TR-EmelNeural"
+   "tr-TR-AhmetNeural"
   ]
  },
  "trp": {
@@ -1394,8 +1319,7 @@
   "google": "uk",
   "nom": "Ukrainian",
   "voix": [
-   "uk-UA-OstapNeural",
-   "uk-UA-PolinaNeural"
+   "uk-UA-OstapNeural"
   ]
  },
  "ur": {
@@ -1403,17 +1327,14 @@
   "nom": "Urdu",
   "voix": [
    "ur-PK-AsadNeural",
-   "ur-PK-UzmaNeural",
-   "ur-IN-SalmanNeural",
-   "ur-IN-GulNeural"
+   "ur-IN-SalmanNeural"
   ]
  },
  "uz": {
   "google": "uz",
   "nom": "Uzbek",
   "voix": [
-   "uz-UZ-SardorNeural",
-   "uz-UZ-MadinaNeural"
+   "uz-UZ-SardorNeural"
   ]
  },
  "ve": {
@@ -1430,8 +1351,7 @@
   "google": "vi",
   "nom": "Vietnamese",
   "voix": [
-   "vi-VN-NamMinhNeural",
-   "vi-VN-HoaiMyNeural"
+   "vi-VN-NamMinhNeural"
   ]
  },
  "war": {
@@ -1468,9 +1388,7 @@
   "google": "yue",
   "nom": "Cantonese",
   "voix": [
-   "zh-HK-WanLungNeural",
-   "zh-HK-HiuGaaiNeural",
-   "zh-HK-HiuMaanNeural"
+   "zh-HK-WanLungNeural"
   ]
  },
  "zap": {
@@ -1492,18 +1410,14 @@
   "google": "zh-TW",
   "nom": "Chinese (Traditional)",
   "voix": [
-   "zh-TW-YunJheNeural",
-   "zh-TW-HsiaoChenNeural",
-   "zh-TW-HsiaoYuNeural",
-   "zh-HK-WanLungNeural"
+   "zh-TW-YunJheNeural"
   ]
  },
  "zu": {
   "google": "zu",
   "nom": "Zulu",
   "voix": [
-   "zu-ZA-ThembaNeural",
-   "zu-ZA-ThandoNeural"
+   "zu-ZA-ThembaNeural"
   ]
  }
 }

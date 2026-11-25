@@ -569,12 +569,15 @@ def preparer_pour_voix(texte: str, langue: str) -> str:
 # 3. Synthèse vocale
 # --------------------------------------------------------------------------
 # Voix de secours si la voix choisie ne répond pas (Microsoft en retire parfois).
+# Toujours des voix d'homme : la prêche ne change jamais de voix en cours de route.
 VOIX_SECOURS = {
-    "zh": ["zh-CN-YunxiNeural", "zh-CN-YunjianNeural", "zh-CN-YunyangNeural", "zh-CN-XiaoxiaoNeural"],
-    "es": ["es-MX-JorgeNeural", "es-ES-AlvaroNeural", "es-US-AlonsoNeural", "es-MX-DaliaNeural"],
-    "ru": ["ru-RU-DmitryNeural", "en-US-AndrewMultilingualNeural", "en-US-BrianMultilingualNeural", "ru-RU-SvetlanaNeural"],
-    "hi": ["hi-IN-MadhurNeural", "hi-IN-SwaraNeural"],
+    "zh": ["zh-CN-YunxiNeural", "zh-CN-YunjianNeural", "zh-CN-YunyangNeural"],
+    "es": ["es-MX-JorgeNeural", "es-ES-AlvaroNeural", "es-US-AlonsoNeural"],
+    "ru": ["ru-RU-DmitryNeural"],
+    "hi": ["hi-IN-MadhurNeural"],
 }
+# Voix d'homme « multilingues » : elles lisent aussi les autres langues, en dernier recours.
+VOIX_HOMMES_MULTILINGUES = ["en-US-AndrewMultilingualNeural", "en-US-BrianMultilingualNeural"]
 
 
 async def voix_candidates(langue: str, preferee: str) -> list[str]:
@@ -584,14 +587,18 @@ async def voix_candidates(langue: str, preferee: str) -> list[str]:
     liste = [preferee] + VOIX_SECOURS.get(langue, []) + TOUTES.get(langue, {}).get("voix", [])
     liste = [v for v in liste if v]
     try:
-        code = (liste[0].split("-")[0] if liste else LANGUES[langue][0].split("-")[0])
+        # Même région que la voix principale (zh-CN, zh-HK…) : jamais un autre dialecte.
+        locale = liste[0].rsplit("-", 1)[0] if liste else LANGUES[langue][0]
         toutes = await asyncio.wait_for(edge_tts.list_voices(), timeout=60)
+        genre = {v["ShortName"]: v.get("Gender") for v in toutes}
         hommes = [v["ShortName"] for v in toutes
-                  if v["Locale"].startswith(code + "-") and v.get("Gender") == "Male"]
-        autres = [v["ShortName"] for v in toutes if v["Locale"].startswith(code + "-")]
-        liste += hommes + autres
+                  if v["Locale"] == locale and v.get("Gender") == "Male"
+                  and "Multilingual" not in v["ShortName"]]
+        # Seulement des voix d'homme (une voix imposée avec --voix est gardée telle quelle).
+        liste = [liste[0]] + [v for v in liste[1:] if genre.get(v, "Male") == "Male"] + hommes
     except Exception as e:
         print(f"      (liste des voix indisponible : {e})")
+    liste += VOIX_HOMMES_MULTILINGUES
     return list(dict.fromkeys(liste))  # sans doublons, dans l'ordre
 
 

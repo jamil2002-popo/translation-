@@ -270,6 +270,7 @@
   .preche summary:focus-visible { outline-offset: -2px; }
   .preche-date { font-family: var(--font-mono); font-size: 12.5px; color: var(--muted); white-space: nowrap; }
   .preche-titre { font-weight: 500; overflow-wrap: anywhere; }
+  .preche-titre .fini { display: block; margin-top: 2px; font-weight: 400; font-size: 12.5px; color: var(--muted); }
   .preche-langues { display: flex; gap: 4px; }
   .code { font-family: var(--font-mono); font-size: 11px; padding: 2px 5px; border-radius: 4px; background: var(--surface-2); border: 1px solid var(--line); color: var(--muted); text-transform: uppercase; }
   .chevron { color: var(--faint); transition: transform .15s; }
@@ -523,6 +524,7 @@ const TEXTES = {
     c_envoi: 'Envoi de « {nom} »… {p} %', c_envoyes: '{ok} fichier(s) sur {n} envoyé(s). La compression continue sur GitHub, même si tu fermes la page.',
     c_attente: "En attente d'un serveur GitHub…", c_en_cours: 'Compression en cours…', c_echec: 'La compression a échoué. Supprime-le et renvoie le fichier.',
     c_supprime_le: 'supprimé le {d}', c_confirmer: 'Supprimer « {t} » ?',
+    fini_trad: 'Traduit le {d} à {h}', fini_comp: 'Compressé le {d} à {h}',
     col_trad: 'Traduction des prêches', col_trad_aide: 'Dépose une prêche : elle est traduite et lue à voix haute dans les langues choisies.',
     col_comp: 'Compression de MP3', col_comp_aide: 'Rend un fichier audio plus léger, sans le traduire.',
     langue_auto: '<strong>Langue de la prêche :</strong> reconnue automatiquement (anglais, français ou toute autre langue). Si elle fait partie des langues cochées, elle est simplement ignorée.',
@@ -578,6 +580,7 @@ const TEXTES = {
     c_envoi: 'Uploading “{nom}”… {p}%', c_envoyes: '{ok} of {n} file(s) uploaded. Compression continues on GitHub, even if you close the page.',
     c_attente: 'Waiting for a GitHub server…', c_en_cours: 'Compressing…', c_echec: 'Compression failed. Delete it and upload the file again.',
     c_supprime_le: 'deleted on {d}', c_confirmer: 'Delete “{t}”?',
+    fini_trad: 'Translated on {d} at {h}', fini_comp: 'Compressed on {d} at {h}',
     col_trad: 'Sermon translation', col_trad_aide: 'Drop a sermon: it is translated and read aloud in the chosen languages.',
     col_comp: 'MP3 compression', col_comp_aide: 'Makes an audio file smaller, without translating it.',
     langue_auto: '<strong>Sermon language:</strong> detected automatically (English, French or any other language). If it is one of the checked languages, it is simply skipped.',
@@ -1247,6 +1250,31 @@ const titre = (id) => analyser(id).titre;
 const dateLongue = (d) => d.toLocaleDateString(LOCALE, { day: 'numeric', month: 'long', year: 'numeric' });
 const dateCourte = (d) => d.toLocaleDateString(LOCALE, { day: 'numeric', month: 'short', year: 'numeric' });
 
+// Date et heure de fin d'un traitement : 25/11/2026 à 14h05 (heure de cet ordinateur).
+function finLisible(cle, date) {
+  const p = (n) => String(n).padStart(2, '0');
+  return t(cle, {
+    d: `${p(date.getDate())}/${p(date.getMonth() + 1)}/${date.getFullYear()}`,
+    h: `${p(date.getHours())}h${p(date.getMinutes())}`,
+  });
+}
+
+// Fin de chaque traitement d'après l'historique des runs GitHub : le plus récent
+// qui a été jusqu'au bout (réussi, ou en échec après avoir enregistré des langues).
+async function finsDesRuns(workflow, idDe) {
+  const fins = new Map();
+  try {
+    const { workflow_runs: runs } = await gh(repo(`/actions/workflows/${workflow}/runs?status=completed&per_page=100`));
+    for (const run of runs) {
+      const id = idDe(run);
+      if (!id || fins.has(id) || !['success', 'failure'].includes(run.conclusion)) continue;
+      fins.set(id, new Date(run.updated_at));
+    }
+  } catch (e) { console.warn(e); }
+  return fins;
+}
+const idCompression = (run) => { const m = (run.display_title || '').match(/compression\/([^ .]+)\./); return m && m[1]; };
+
 function etatConnexion(ok, texte) {
   const el = $('#connexion');
   el.className = 'etat' + (ok === true ? ' ok' : ok === false ? ' err' : '');
@@ -1270,7 +1298,8 @@ async function chargerBibliotheque() {
 
   // Tri par date de la prêche (lue dans le titre), la plus récente en haut.
   // Les prêches sans date dans le titre vont à la fin, par date d'envoi.
-  const preches = dossiers.map((d) => ({ ...analyser(d.name), id: d.name, path: d.path }));
+  const fins = await finsDesRuns(WORKFLOW, idDuRun);
+  const preches = dossiers.map((d) => ({ ...analyser(d.name), id: d.name, path: d.path, fin: fins.get(d.name) }));
   const ms = (d) => (d ? d.getTime() : 0);
   preches.sort((a, b) => (!!b.date - !!a.date) || ms(b.date) - ms(a.date) || ms(b.envoi) - ms(a.envoi));
 
@@ -1280,7 +1309,7 @@ async function chargerBibliotheque() {
     return `<details class="preche" data-path="${esc(p.path)}" data-id="${esc(p.id)}">
       <summary>
         <span class="preche-date">${p.date ? esc(dateCourte(p.date)) : t('sans_date')}</span>
-        <span class="preche-titre">${esc(p.titre)}</span>
+        <span class="preche-titre">${esc(p.titre)}${p.fin ? `<small class="fini">${esc(finLisible('fini_trad', p.fin))}</small>` : ''}</span>
         <svg class="chevron" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>
       </summary>
       <div class="preche-corps">
@@ -1577,11 +1606,9 @@ async function chargerCompresses() {
   }
   const items = [...par.values()].filter((e) => e.mp3 || e.parties).sort((a, b) => b.id.localeCompare(a.id));
 
-  // État des compressions pas encore terminées, d'après les runs GitHub.
+  // État des compressions (en cours, échouées) et heure de fin, d'après les runs GitHub.
   let runs = [];
-  if (items.some((e) => !e.mp3)) {
-    try { runs = (await gh(repo(`/actions/workflows/${WORKFLOW_C}/runs?per_page=30`))).workflow_runs; } catch {}
-  }
+  try { runs = (await gh(repo(`/actions/workflows/${WORKFLOW_C}/runs?per_page=100`))).workflow_runs; } catch {}
   const runDe = (id) => runs.find((r) => (r.display_title || '').includes(`compression/${id}.`));
 
   for (const e of items) {
@@ -1608,9 +1635,12 @@ async function chargerCompresses() {
     const expire = e.envoi && new Date(e.envoi.getFullYear(), e.envoi.getMonth(), e.envoi.getDate() + CONSERVATION_JOURS + 1);
     const base = esc(e.nom.replace(/\.[a-z0-9]{2,4}$/i, ''));
     let etat, corps, ouvert = ouverts.has(e.id);
+    const runFini = e.mp3 && runs.find((r) => idCompression(r) === e.id && r.conclusion === 'success');
+    const fin = runFini && new Date(runFini.updated_at);
     if (e.mp3) {
       const gain = e.avant ? Math.round((1 - e.mp3.size / e.avant) * 100) : null;
-      etat = `<span class="c-taille">${e.avant ? `${mo(e.avant)} → ` : ''}${mo(e.mp3.size)}${gain > 0 ? ` <span class="gain">−${gain} %</span>` : ''}</span>`;
+      etat = '<span></span>';
+      e.taille = `${e.avant ? `${mo(e.avant)} → ` : ''}${mo(e.mp3.size)}${gain > 0 ? ` <span class="gain">(−${gain} %)</span>` : ''}`;
       corps = `<div class="c-actions"><button class="small" data-c-play="${esc(e.mp3.path)}">${t('ecouter')}</button>
         <button class="small" data-c-dl="${esc(e.mp3.path)}" data-nom="${base}">${t('telecharger')}</button></div>
         <div class="preche-pied hint" style="padding-top:0">${expire ? esc(t('supprimee_le', { d: dateLongue(expire) })) + ' · ' : ''}<button class="link" data-c-del="${esc(e.id)}">${t('supprimer')}</button></div>`;
@@ -1631,7 +1661,7 @@ async function chargerCompresses() {
     return `<details class="preche" data-id="${esc(e.id)}"${ouvert ? ' open' : ''}>
       <summary>
         <span class="preche-date">${e.date ? esc(dateCourte(e.date)) : t('sans_date')}</span>
-        <span class="preche-titre">${esc(e.nom)}</span>
+        <span class="preche-titre">${esc(e.nom)}${fin || e.taille ? `<small class="fini">${fin ? esc(finLisible('fini_comp', fin)) : ''}${fin && e.taille ? ' · ' : ''}${e.taille ? `<span class="c-taille">${e.taille}</span>` : ''}</small>` : ''}</span>
         ${etat}
         <svg class="chevron" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>
       </summary>
